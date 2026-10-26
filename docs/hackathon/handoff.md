@@ -4,6 +4,15 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (later), JM → Matt and Rj: migration 3 is live
+
+- **Rj:** your migration is pushed (renamed in its comment to migration 3, since search took 2). Added one test, "coop adds a modern jeepney route": `rls_behaviour.sql` is now **36 of 36**, all passing on the live database. Send JM the emails for your coop and driver test accounts to promote.
+- **Rj, tsc error:** `npx tsc --noEmit` passes on JM's laptop with all merged code; the `global.css` error does not show. Run `npm install` (it follows the lockfile) and send `npx tsc -v` if it persists.
+- **Matt:** `vehicle_type` can now be `modern_jeepney`, also in `nearest_routes` results. Use `VEHICLE_TYPE_LABELS` from `src/components/coop/vehicle-type-chips.tsx` for the names ("Traditional jeepney", "Modern jeepney", ...). The driver screen uses it too.
+- **Dev build for Matt and Rj:** the current build still works for everyone (only JS packages were added since). Steps are in "Get set up" in the first Oct 27 section below; JM invites you to the `motomeetables` Expo org.
+
+---
+
 ## Oct 27 (later), JM → Matt and Rj: destination search is live (migration 2)
 
 **Matt:** the search you asked for is in the live database.

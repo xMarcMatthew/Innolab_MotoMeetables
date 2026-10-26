@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "35 of 35 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "36 of 36 PASS" and "no failures".
 
 begin;
 
@@ -132,6 +132,8 @@ select pg_temp.expect('coop still edits a vehicle that keeps its own driver', 'r
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$update public.vehicles set plate = 'TEST-001B' where id = '00000000-0000-0000-0000-0000000000b1'$q$));
 select pg_temp.expect('coop adds a modern jeepney vehicle', 'rows=1',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.vehicles (coop_id, route_id, plate, vehicle_type) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-010', 'modern_jeepney')$q$));
+select pg_temp.expect('coop adds a modern jeepney route', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.routes (terminal_id, destination_name, destination_lat, destination_lng, vehicle_type, guide_fare_regular) values ('00000000-0000-0000-0000-0000000000f1', 'Modern Place', 13.66, 123.22, 'modern_jeepney', 17)$q$));
 
 -- Driver D (assigned to TEST-001)
 select pg_temp.expect('driver sets their status', 'rows=1',

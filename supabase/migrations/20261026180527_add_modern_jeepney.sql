@@ -1,4 +1,4 @@
--- Migration 2: modern jeepney vehicle type, and coops can only assign their own coop's drivers.
+-- Migration 3: modern jeepney vehicle type, and coops can only assign their own coop's drivers.
 -- Idempotent on purpose: safe to re-run if a push fails halfway.
 -- Traditional and modern jeeps have different LTFRB fares, so a route served by both gets one row per type.
 -- 'jeepney' keeps meaning the traditional jeep; existing rows are not changed.

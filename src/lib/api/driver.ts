@@ -1,3 +1,4 @@
+import type { VehicleType } from "@/lib/api/coop";
 import { supabase } from "@/lib/supabase";
 
 export type VehicleStatus = "off_duty" | "loading" | "departed";
@@ -5,7 +6,7 @@ export type VehicleStatus = "off_duty" | "loading" | "departed";
 export type MyVehicle = {
   id: string;
   plate: string;
-  vehicle_type: "jeepney" | "tricycle" | "bus";
+  vehicle_type: VehicleType;
   status: VehicleStatus;
   driver_fare: number | null;
   route: {

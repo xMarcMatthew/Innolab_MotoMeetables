@@ -3,13 +3,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
+import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { FormField } from "@/components/form-field";
 import { SignOutButton } from "@/components/sign-out-button";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
 import { setFare, setStatus, type VehicleStatus } from "@/lib/api/driver";
 import { type Fare, fareSchema } from "@/lib/validation";
-
-const TYPE_LABELS = { jeepney: "Jeepney", tricycle: "Tricycle", bus: "Bus" };
 
 // Status is always spelled out, never color alone. Orange accent only on "Now loading" (Palette A).
 const STATUSES: { status: VehicleStatus; label: string; button: string; text: string }[] = [
@@ -87,7 +86,7 @@ export default function DriverHome() {
     >
       <View className="gap-1">
         <Text className="text-2xl font-bold text-foreground">
-          {vehicle.plate} · {TYPE_LABELS[vehicle.vehicle_type]}
+          {vehicle.plate} · {VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}
         </Text>
         <Text className="text-muted">
           {route
