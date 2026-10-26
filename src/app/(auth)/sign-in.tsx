@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Pressable, ScrollView, Text } from "react-native";
+import { ScrollView, Text } from "react-native";
 
 import { FormField } from "@/components/form-field";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { type SignIn, signInSchema } from "@/lib/validation";
 
@@ -28,7 +29,7 @@ export default function SignInScreen() {
       contentContainerClassName="gap-4 p-6"
       keyboardShouldPersistTaps="handled"
     >
-      <Text className="text-3xl font-bold text-foreground">Larga</Text>
+      <Text className="text-4xl font-bold text-foreground">Larga</Text>
       <FormField
         control={control}
         name="email"
@@ -45,19 +46,17 @@ export default function SignInScreen() {
         secureTextEntry
       />
       {error && <Text className="text-destructive">{error}</Text>}
-      <Pressable
-        accessibilityRole="button"
-        disabled={formState.isSubmitting}
+      <Button
+        label="Sign in"
+        loading={formState.isSubmitting}
+        loadingLabel="Signing in..."
         onPress={onSubmit}
-        className="items-center rounded-lg bg-primary py-3"
-      >
-        <Text className="font-semibold text-white">
-          {formState.isSubmitting ? "Signing in..." : "Sign in"}
-        </Text>
-      </Pressable>
-      <Link href="/sign-up" replace className="text-center font-semibold text-primary">
-        No account yet? Create one
-      </Link>
+      />
+      <Button
+        label="No account yet? Create one"
+        variant="link"
+        onPress={() => router.replace("/sign-up")}
+      />
     </ScrollView>
   );
 }

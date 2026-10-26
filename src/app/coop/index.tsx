@@ -1,8 +1,13 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { SignOutButton } from "@/components/sign-out-button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { useMyTerminals } from "@/hooks/use-my-terminals";
 
 export default function CoopHome() {
@@ -16,80 +21,58 @@ export default function CoopHome() {
     }, [reload]),
   );
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="gap-4 p-6">
       <Text className="text-2xl font-bold text-foreground">Terminals</Text>
 
-      {error && (
-        <View className="gap-2">
-          <Text className="text-destructive">{error}</Text>
-          <Pressable accessibilityRole="button" onPress={reload}>
-            <Text className="font-semibold text-primary">Try again</Text>
-          </Pressable>
-        </View>
+      {error && <ErrorState message={error} onRetry={reload} />}
+
+      {!error && terminals.length === 0 && (
+        <EmptyState icon="map-marker-outline" message="No terminals yet" />
       )}
 
-      {!error && terminals.length === 0 && <Text className="text-muted">No terminals yet</Text>}
-
       {terminals.map((t) => (
-        <View
-          key={t.id}
-          className="flex-row items-center gap-3 rounded-lg border border-border bg-white p-4"
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Routes of ${t.name}`}
-            onPress={() =>
-              router.push({
-                pathname: "/coop/routes",
-                params: { terminalId: t.id, terminalName: t.name },
-              })
-            }
-            className="flex-1 gap-1"
-          >
-            <Text className="text-lg font-semibold text-foreground">{t.name}</Text>
-            <Text className="text-muted">
-              {t.lat.toFixed(5)}, {t.lng.toFixed(5)} · Routes
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${t.name}`}
-            onPress={() =>
-              router.push({
-                pathname: "/coop/terminal",
-                params: { id: t.id, name: t.name, lat: String(t.lat), lng: String(t.lng) },
-              })
-            }
-          >
-            <Text className="font-semibold text-primary">Edit</Text>
-          </Pressable>
-        </View>
+        <Card key={t.id}>
+          <Text className="text-lg font-semibold text-foreground">{t.name}</Text>
+          <View className="flex-row">
+            <Button
+              label="View routes ›"
+              variant="link"
+              onPress={() =>
+                router.push({
+                  pathname: "/coop/routes",
+                  params: { terminalId: t.id, terminalName: t.name },
+                })
+              }
+            />
+            <Button
+              label="Edit ›"
+              variant="link"
+              onPress={() =>
+                router.push({
+                  pathname: "/coop/terminal",
+                  params: { id: t.id, name: t.name, lat: String(t.lat), lng: String(t.lng) },
+                })
+              }
+            />
+          </View>
+        </Card>
       ))}
 
       <View className="flex-row gap-3">
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label="Add terminal"
           onPress={() => router.push("/coop/terminal")}
-          className="flex-1 items-center rounded-lg bg-primary py-3"
-        >
-          <Text className="font-semibold text-white">Add terminal</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+          className="flex-1"
+        />
+        <Button
+          label="Vehicles"
+          variant="outline"
           onPress={() => router.push("/coop/vehicles")}
-          className="flex-1 items-center rounded-lg border border-muted bg-white py-3"
-        >
-          <Text className="font-semibold text-foreground">Vehicles</Text>
-        </Pressable>
+          className="flex-1"
+        />
       </View>
 
       <View className="items-center">

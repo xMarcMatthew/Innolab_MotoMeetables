@@ -2,10 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { PinPicker } from "@/components/coop/pin-picker";
 import { FormField } from "@/components/form-field";
+import { Button } from "@/components/ui/button";
 import { createTerminal, updateTerminal } from "@/lib/api/coop";
 import { terminalSchema } from "@/lib/validation";
 
@@ -76,14 +77,7 @@ export default function TerminalScreen() {
 
       {saveError && <Text className="text-destructive">{saveError}</Text>}
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={busy}
-        onPress={onSave}
-        className="items-center rounded-lg bg-primary py-3"
-      >
-        <Text className="font-semibold text-white">{busy ? "Saving..." : "Save terminal"}</Text>
-      </Pressable>
+      <Button label="Save terminal" loading={busy} loadingLabel="Saving..." onPress={onSave} />
     </ScrollView>
   );
 }

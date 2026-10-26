@@ -1,5 +1,4 @@
-import { Pressable, Text } from "react-native";
-
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { endTrip, isOnTrip } from "@/lib/trip";
 
@@ -11,9 +10,5 @@ export async function signOut() {
 
 // The root layout's guard sees the session end and moves to sign-in.
 export function SignOutButton() {
-  return (
-    <Pressable accessibilityRole="button" onPress={signOut}>
-      <Text className="font-semibold text-primary">Sign out</Text>
-    </Pressable>
-  );
+  return <Button label="Sign out" variant="link" onPress={signOut} />;
 }

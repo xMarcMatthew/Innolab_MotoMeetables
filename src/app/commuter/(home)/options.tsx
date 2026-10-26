@@ -1,11 +1,13 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 import { FareLines, StatusLine } from "@/components/commuter/ride-lines";
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { useRideOptions } from "@/hooks/use-ride-options";
 import { colors } from "@/lib/colors";
+import { recordPick } from "@/lib/saved-trips";
 
 const distance = (m: number) =>
   m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
@@ -14,6 +16,11 @@ export default function OptionsScreen() {
   const { lat, lng, label } = useLocalSearchParams<{ lat: string; lng: string; label?: string }>();
   const { options, me, loading, error, reload } = useRideOptions(Number(lat), Number(lng));
   const place = label ?? "your pin";
+
+  // Remember this destination for the quick trips on Home; it never blocks the screen.
+  useEffect(() => {
+    recordPick({ name: label, lat: Number(lat), lng: Number(lng) });
+  }, [label, lat, lng]);
 
   if (loading) {
     return (

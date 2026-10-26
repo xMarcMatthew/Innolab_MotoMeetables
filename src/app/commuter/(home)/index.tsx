@@ -8,6 +8,7 @@ import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-nativ
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getMyLocation } from "@/lib/my-location";
+import { QuickTrips } from "@/components/commuter/quick-trips";
 import { PinPicker } from "@/components/coop/pin-picker";
 import { useDestinations } from "@/hooks/use-destinations";
 import type { LatLng } from "@/lib/api/commuter";
@@ -132,6 +133,7 @@ export default function CommuterHome() {
       </MapView>
 
       <View className="absolute left-4 right-4 gap-2" style={{ top: insets.top + 8 }}>
+        <QuickTrips />
         <TextInput
           accessibilityLabel="Where to?"
           value={query}

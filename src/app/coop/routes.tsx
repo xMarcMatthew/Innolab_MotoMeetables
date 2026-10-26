@@ -1,8 +1,13 @@
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { useTerminalRoutes } from "@/hooks/use-terminal-routes";
 
 const peso = (n: number) => `₱${n.toFixed(2)}`;
@@ -23,34 +28,21 @@ export default function TerminalRoutes() {
     }, [reload]),
   );
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="gap-4 p-6">
       <Stack.Screen options={{ title: "Routes" }} />
       <Text className="text-2xl font-bold text-foreground">{terminalName}</Text>
 
-      {error && (
-        <View className="gap-2">
-          <Text className="text-destructive">{error}</Text>
-          <Pressable accessibilityRole="button" onPress={reload}>
-            <Text className="font-semibold text-primary">Try again</Text>
-          </Pressable>
-        </View>
-      )}
+      {error && <ErrorState message={error} onRetry={reload} />}
 
-      {!error && routes.length === 0 && <Text className="text-muted">No routes yet</Text>}
+      {!error && routes.length === 0 && <EmptyState icon="routes" message="No routes yet" />}
 
       {routes.map((r) => (
-        <Pressable
+        <Card
           key={r.id}
-          accessibilityRole="button"
+          chevron
           accessibilityLabel={`Edit route to ${r.destination_name}`}
           onPress={() =>
             router.push({
@@ -68,23 +60,19 @@ export default function TerminalRoutes() {
               },
             })
           }
-          className="gap-1 rounded-lg border border-border bg-white p-4"
         >
           <Text className="text-lg font-semibold text-foreground">{r.destination_name}</Text>
           <Text className="text-muted">
             {VEHICLE_TYPE_LABELS[r.vehicle_type]} · {peso(r.guide_fare_regular)}
             {r.guide_fare_discounted !== null && ` / ${peso(r.guide_fare_discounted)} discounted`}
           </Text>
-        </Pressable>
+        </Card>
       ))}
 
-      <Pressable
-        accessibilityRole="button"
+      <Button
+        label="Add route"
         onPress={() => router.push({ pathname: "/coop/route", params: { terminalId } })}
-        className="items-center rounded-lg bg-primary py-3"
-      >
-        <Text className="font-semibold text-white">Add route</Text>
-      </Pressable>
+      />
     </ScrollView>
   );
 }

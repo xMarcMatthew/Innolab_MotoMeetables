@@ -9,4 +9,5 @@ export const colors = {
   muted: "#475569",
   border: "#E4ECFC",
   destructive: "#DC2626",
+  white: "#FFFFFF",
 } as const;

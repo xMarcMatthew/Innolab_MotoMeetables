@@ -189,3 +189,41 @@ export async function setVehicleStatusAsCoop(id: string, status: VehicleStatus) 
   if (error) throw new Error(error.message);
   if (data.length === 0) throw new Error("Vehicle not found or not yours to edit");
 }
+
+export async function getVehiclePaymentQr(
+  id: string,
+): Promise<{ payment_qr: string | null; payment_qr_by_driver: boolean }> {
+  const { data, error } = await supabase
+    .from("vehicles")
+    .select("payment_qr, payment_qr_by_driver")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Vehicle not found");
+  return data;
+}
+
+// A coop save is never "by driver"; null removes the QR. Plain update under RLS (the caller checks the format with isValidQrPh).
+export async function setVehiclePaymentQr(id: string, qr: string | null) {
+  const { data, error } = await supabase
+    .from("vehicles")
+    .update({ payment_qr: qr, payment_qr_by_driver: false })
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("Vehicle not found or not yours to edit");
+}
+
+// One query for the whole coop, skipping vehicles whose QR a driver set. Returns how many were updated.
+export async function applyCoopPaymentQr(qr: string): Promise<number> {
+  const coopId = await getMyCoopId();
+  const { data, error } = await supabase
+    .from("vehicles")
+    .update({ payment_qr: qr, payment_qr_by_driver: false })
+    .eq("coop_id", coopId)
+    .eq("payment_qr_by_driver", false)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No vehicles to update");
+  return data.length;
+}

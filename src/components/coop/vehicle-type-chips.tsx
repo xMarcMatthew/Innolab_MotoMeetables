@@ -35,7 +35,7 @@ export function Chips<T extends string>({
           accessibilityState={{ selected: o.value === value, disabled }}
           disabled={disabled}
           onPress={() => onChange(o.value)}
-          className={`flex-1 items-center rounded-lg py-3 ${wrap ? "min-w-[45%]" : ""} ${
+          className={`min-h-12 flex-1 items-center justify-center rounded-lg active:opacity-80 disabled:opacity-50 ${wrap ? "min-w-[45%]" : ""} ${
             o.value === value ? "bg-primary" : "border border-muted bg-white"
           }`}
         >
