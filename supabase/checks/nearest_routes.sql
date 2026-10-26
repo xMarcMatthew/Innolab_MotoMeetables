@@ -1,7 +1,7 @@
 -- nearest_routes check: calls the search as a logged-in user and expects each answer.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/nearest_routes.sql).
--- It ends with an error on purpose; the message should read "11 of 11 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "12 of 12 PASS" and "no failures".
 -- Test routes sit near lat 0, lng 0 (open sea), so real Naga routes never outrank them.
 
 begin;
@@ -72,6 +72,10 @@ select pg_temp.expect('without my location, the closer drop comes first', '00000
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select route_id::text from public.nearest_routes(0, 0.05) limit 1'));
 select pg_temp.expect('with my location, the terminal nearest me wins a tie', '00000000-0000-0000-0000-0000000000a4',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select route_id::text from public.nearest_routes(0, 0.05, 0, 0.039) limit 1'));
+
+-- Pin on terminal f2: r4 leaves from there, so it cannot take you there.
+select pg_temp.expect('a route that starts at the pin is skipped', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', $q$select count(*) from public.nearest_routes(0, 0.04) where route_id = '00000000-0000-0000-0000-0000000000a4'$q$));
 
 select pg_temp.expect('at most 10 results', 'true',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select (count(*) <= 10)::text from public.nearest_routes(0, 0)'));

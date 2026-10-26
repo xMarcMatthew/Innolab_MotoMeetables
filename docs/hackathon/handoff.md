@@ -4,6 +4,16 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (later), JM → Matt and Rj: Naga seed loaded, search fix (migration 4)
+
+- **Rj's seed is in the live database:** 2 sample coops (jeepney coop `b6ee27cb-34ef-53a9-90f2-18804abddbe5`, tricycle TODA `c9a516b2-c5aa-5668-ab80-6e68d988b3d9`), 12 terminals, 19 routes (traditional and modern rows), 6 vehicles (off duty, no driver).
+- **Search fix:** `nearest_routes` now skips a route whose terminal is within 300 m of the pin. Before, a pin at Pacol listed Pacol to Centro first. Same call, same columns.
+- **Matt:** route lines are now in `routes.route_line`, so your map can read them from Supabase instead of `data/routes/*.json`. Try a pin at Pacol (13.6589, 123.2512): Centro to Pacol comes first, then Carolina and Panicuason jeeps that pass through Pacol.
+- **Known limit (say it in the pitch):** a jeep that passes your pin shows its full-route fare. A Carolina jeep through Pacol shows ₱32.80, not about ₱24.
+- **Rj:** send JM the coop and driver test account emails; the coop goes in the sample jeepney coop and the driver gets `SMP-1001`.
+
+---
+
 ## Oct 27 (later), JM → Matt and Rj: migration 3 is live
 
 - **Rj:** your migration is pushed (renamed in its comment to migration 3, since search took 2). Added one test, "coop adds a modern jeepney route": `rls_behaviour.sql` is now **36 of 36**, all passing on the live database. Send JM the emails for your coop and driver test accounts to promote.
