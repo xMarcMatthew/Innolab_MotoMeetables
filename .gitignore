@@ -8,6 +8,9 @@
 CLAUDE.local.md
 .court/
 
+# Raw Directions API responses, stitched into data/routes/*.geojson
+data/routes/raw/
+
 # Expo (from the SDK 56 template)
 node_modules/
 .expo/
