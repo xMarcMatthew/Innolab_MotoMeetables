@@ -27,10 +27,10 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 
 ### Top rules (always apply)
 
-1. **Stack:** Laravel (PHP) + React via Inertia + Tailwind + Supabase Postgres, deployed on Railway or Render. If the Decisions Log says we picked Alternative B (Flask + React + Supabase, section 2), follow that instead. Do not suggest other stacks unless we ask. Mobile only if section 2's Mobile Backup Plan says so.
+1. **Stack:** Android APK in Expo SDK 56 + Expo Router + NativeWind, with Supabase as the whole backend (Auth, Postgres + PostGIS, RLS, RPCs, Realtime, Edge Functions) and Mapbox for maps. No custom server. Full details in `tech-stack.md`. Do not suggest other stacks unless we ask.
 2. **Must-haves first:** build only the Must-have features (Kano Model, section 3.3) until they work end to end and are deployed. No Delighters before that.
 3. **Keep it simple:** refine an existing solution, do not reinvent. Write the smallest code that works. No features we did not ask for.
-4. **Security is not optional:** auth middleware on protected routes, Form Request validation, Policies, Eloquent or query builder only (no raw SQL with user input), never commit .env.
+4. **Security is not optional:** RLS on every table, SECURITY DEFINER RPCs (with their own `auth.uid()` and input checks) for sensitive writes, only the anon key in the app, never send the user's id from the client, never commit .env. See the Security model in `tech-stack.md`.
 5. **Feature freeze at H16:** after that, bug fixes only.
 6. **When in doubt, ask.** If a request conflicts with this file, point out the conflict before writing code.
 
@@ -39,13 +39,13 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 | Field | Value |
 | --- | --- |
 | **Theme** | Develop a purpose-driven digital solution that empowers a local community, non-profit organization, or grassroots movement in the Bicol Region to solve a real-world problem they face today. Find a real problem, prove that it matters, and build a working solution that people can actually use. |
-| **Chosen idea (one sentence)** | A Naga City commute app (working name TransCo, rebrand pending): tells commuters which jeepney or tricycle to take, where to wait and get off, the correct fare, and where the jeepney is now. See founder/idea.md. |
-| **Target users** | Two account types: **commuters** (find a ride, see fare and ETA) and **drivers** (their phone shares the PUJ's live location). Route data comes from crowdsourcing and LGUs. |
-| **Core user flow** (the one flow that must work) | Commuter sets where they are and where they are going, then sees the right route, where to wait, where to get off, and the fare. |
-| **Must-have features** | Route data for Naga, route and fare lookup, commuter and driver accounts. (Scope proposal in founder/feasibility.md; payment and live tracking go through third-party services.) |
-| **Web or mobile** | Web (default), PWA as a Satisfier |
-| **Backend** | Laravel or Flask (decide and log it in the Decisions Log) |
-| **Current hour / phase** | Planning. Terminal pivot clarified by Rj (docs/hackathon/terminal-pivot.md), waiting on team review; then rewrite feasibility.md, tech-stack.md and payment-flow.md to match before scaffolding. |
+| **Chosen idea (one sentence)** | A Naga City terminal commute app (working name TransCo, rebrand pending): pick a jeepney, bus or tricycle terminal and a destination, see the vehicle, the fare from the coop's fare matrix, whether it is loading or has departed, and where it is now. See terminal-pivot.md. |
+| **Target users** | Three account types: **commuters** (find the vehicle and fare, scan the driver's QR on boarding), **drivers** (share live location, set loading or departed), **coop / TODA** (manage terminals, fares and vehicles). The partner is a TODA or terminal coop. |
+| **Core user flow** (the one flow that must work) | Commuter picks a terminal and a destination, then sees the vehicle that serves it, the fare, and whether one is now loading or has departed. |
+| **Must-have features** | See section 3.3. |
+| **Web or mobile** | Android APK (Expo dev build, EAS Build) |
+| **Backend** | Supabase only, no custom server (see tech-stack.md) |
+| **Current hour / phase** | Planning done, stack decided (tech-stack.md). Next, in order: 1) **branding** with the designer (name, selling point, colors, map style direction); 2) **task division** (fill the feature table in section 1, pick the integrator); 3) create the accounts (Expo, Supabase, Mapbox) and the first EAS dev build on all three phones; 4) seed Naga terminal and fare data. |
 
 ## 1. How We Work [AI: REFERENCE]
 
@@ -60,7 +60,9 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 |  |  |  |
 |  |  |  |
 
-## 2. Tech Stack and Starter Kit [AI: FOLLOW]
+## 2. Tech Stack and Starter Kit [AI: REFERENCE]
+
+**Superseded on Oct 26:** our stack is in `tech-stack.md` (Expo APK + Supabase only). The Laravel, Flask and web sections below are kept as history; do not follow them. The Setup Checklist is current.
 
 **Stack:** one Laravel app. PHP runs the backend, Node.js (via Vite) builds the React frontend. One repo, one deploy, one auth system.
 
@@ -131,17 +133,17 @@ Laravel connects to the database as one Postgres user, so Supabase RLS no longer
 ### Setup Checklist [HUMAN ONLY]
 
 - [x] Repo created by Matt on GitHub (double-check all 3 members have push access)
-- [ ] PHP 8.x, Composer, and Node.js LTS installed on all 3 laptops (Laragon makes this easy on Windows)
-- [ ] Laravel app created with the React starter kit, pushed to the repo
-- [ ] Database connected (Supabase Postgres connection string or local MySQL), migrations run
+- [ ] Node 22 LTS, Git, EAS CLI on all 3 laptops; Android Studio + JDK 17 on one laptop (build backup)
+- [ ] Expo SDK 56 app created (Expo Router + NativeWind), every native module from tech-stack.md installed, pushed to the repo
+- [ ] Supabase project created (Singapore), PostGIS on, email confirmation off, CLI linked on the integrator's laptop, first migration pushed
+- [ ] First EAS dev build installed on all 3 phones
 - [ ] Auth works: register, login, logout
-- [ ] Hello-world deployed to Railway or Render, opens on a phone
-- [ ] Everyone has cloned and run it: `composer install`, `npm install`, `php artisan serve`, `npm run dev`
-- [ ] .env values shared privately, not in the repo
+- [ ] Everyone has cloned and run it: `npm install`, `npm start`, opens on their phone's dev build
+- [ ] .env values (Supabase URL and anon key, Mapbox public token) shared privately, not in the repo
 - [ ] **Confirm with TACTICS** if pre-built boilerplate is allowed, since the event says "build from scratch"
 - [x] **Confirm with TACTICS** if AI tools like Claude are allowed (Yes, allowed)
 
-**Time-box rule:** if setup takes more than 1 hour, fall back to React + Supabase + Vercel. Better to show up with a stack that works than fight setup during the event.
+**Time-box rule:** if the EAS dev build is not on the phones within 1 hour, switch to the local build (`npx expo run:android`) on the Android Studio laptop. Better to show up with a build that works than wait in a queue.
 
 ### Alternative B: Flask (Python) Stack (Mentor suggestion)
 
@@ -225,9 +227,9 @@ After locking the idea, sort every feature into one of these three buckets befor
 
 | **Category** | **What It Means** | **When We Build It** | **Our Features** |
 | --- | --- | --- | --- |
-| **Must-have** | Without these, the app does not work or does not solve the problem. Users expect them. | H2.5 to H10 (core flow) |  |
-| **Satisfiers** | The better these are, the happier users get (speed, filters, nicer UI, etc.). | H10 to H16 |  |
-| **Delighters / Fun** | Unexpected extras that wow users and judges. Nobody misses them if absent. | Only after Must-haves are done, before the H16 freeze |  |
+| **Must-have** | Without these, the app does not work or does not solve the problem. Users expect them. | H2.5 to H10 (core flow) | Commuter, driver and coop accounts with roles; terminal and fare guide (pick terminal and destination, see vehicle type, fare, route line on the map) from seeded Naga data; coop screens to edit terminals, routes, fares and vehicles; driver sets "now loading" or "departed" |
+| **Satisfiers** | The better these are, the happier users get (speed, filters, nicer UI, etc.). | H10 to H16 | Live GPS tracking (background task + Realtime); boarding QR with the 100 m check (trip record, passenger count); "Pay ₱__" with the coop's QR Ph code; push when a vehicle starts loading; the designer's Mapbox style |
+| **Delighters / Fun** | Unexpected extras that wow users and judges. Nobody misses them if absent. | Only after Must-haves are done, before the H16 freeze | Share my ride with family; buses beyond info only |
 
 **Rule:** no Delighter work starts until every Must-have works end to end and is deployed.
 
@@ -272,8 +274,8 @@ After locking the idea, sort every feature into one of these three buckets befor
 - [ ] Toiletries, extra shirt
 - [ ] School ID
 - [ ] HDMI / USB-C adapter for the projector (test it before the pitch)
-- [ ] PHP, Composer, and Node.js already installed on every laptop (don't rely on venue WiFi)
-- [ ] Expo Go installed on our phones (mobile backup plan)
+- [ ] Node, EAS CLI and (one laptop) Android Studio already installed (don't rely on venue WiFi)
+- [ ] Our dev build installed on our phones (Expo Go cannot run our app), plus USB cables for the local build
 
 ## 7. Decisions Log [AI: FOLLOW]
 
@@ -294,3 +296,11 @@ Newest information wins. Add a row for every decision.
 | Oct 26, payment review | Demo as an Android APK (React Native + Expo on the same Laravel backend, per the Mobile Backup Plan), not a web app. Team has test devices ready. | Team decision. Background location was the trigger; with tracking dropped (below), reconfirm the APK is still worth the toolchain time. |
 | Oct 26, scope pivot (**proposed, confirm next session**) | Narrow to **terminals**: jeepney, bus and tricycle terminals with fixed fare matrices and known start and end points. Core flow: pick terminal and destination, see vehicle and fare, pay through the coop or TODA QR, get a ticket QR, driver scans it once. Hail-anywhere jeeps without conductors are out of scope. Live GPS tracking replaced by dispatcher "now loading / departed". | Fixed fares remove fare computation, GPS pickup and spoofing problems. Data is a fare matrix per terminal, not traced routes. Partner is a TODA or terminal coop. Open points: confirm matrices are per destination, buses as info only (bus lines already sell tickets online), coop QR vs driver QR, say in the pitch what was dropped, re-check the APK choice. |
 | Oct 26, pivot clarified (**proposed, for team review**) | Terminal pivot refined by Rj, see `terminal-pivot.md`: **live GPS tracking stays**, plus a "now loading / departed" status per vehicle. Each driver has a reusable QR issued by the app that commuters scan on boarding to link themselves to that vehicle (replaces the per-trip ticket QR). The fare matrix guide stays in the app. Driver may handle fares. Tap-in and tap-out dropped. Hail-anywhere out of scope, future work. | Supersedes the previous row where they differ. Open questions are listed in terminal-pivot.md. |
+| Oct 26, stack | **Terminal pivot decided** (Rj's version, terminal-pivot.md). Open questions answered: linking to a vehicle gives a trip record and a passenger count; the driver sets loading or departed (coop users can too); fare matrix per destination only; buses info only; the app does not confirm payments. | Team pick; latest version of the pivot. |
+| Oct 26, stack | **Android APK confirmed**: Expo SDK 56, Expo Router, NativeWind 4, dev build from the start, EAS Build (local `expo run:android` as backup). | Background GPS needs a dev build anyway. SDK 56 is the version set the team already knows works. |
+| Oct 26, stack | **Backend: Supabase only**, no custom server (Auth, Postgres + PostGIS, RLS, SECURITY DEFINER RPCs, Realtime, Edge Functions). Replaces Laravel and Flask; top rules 1 and 4 and section 2 updated. | Team's comfort stack. One service, one language, nothing to host. Security moves into RLS. |
+| Oct 26, stack | **Map: Mapbox via @rnmapbox/maps** with the designer's style; route lines stored once, no Directions or Map Matching. Replaces the react-map-gl row. | react-map-gl is web only. Fixed terminal routes need no live routing. |
+| Oct 26, stack | **Live updates: Supabase Realtime**. Driver's background task sends location about every 5 s; a vehicle hides after 15 s without an update. Replaces the polling row. | Built into Supabase, no polling code. |
+| Oct 26, stack | **Payment**: one `payment_qr` text per vehicle, the coop's QR Ph code by default; app shows the fare next to it; no confirmation; cash always fine. **Boarding**: reusable QR per vehicle, accepted only within about 100 m of the vehicle's live position. | We never hold money. The distance check stops photo-of-the-QR misuse. |
+| Oct 26, stack | **No RevenueCat.** Business model for the pitch: coops or the LGU pay per terminal, commuters ride free. | $9.99 a month is about 40 jeepney fares; real purchases need the Play Store. |
+| Oct 26, stack | **Workflow** from the team's other Expo + Supabase app, setup knowledge only, no code copied (team considers this within the build-from-scratch rule). Supabase CLI for migrations and functions; the integrator runs `db push`, deploys and the RLS check. Push notifications after H10. | Saves setup time without reusing code. |

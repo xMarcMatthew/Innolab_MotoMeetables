@@ -1,83 +1,159 @@
-# Tech Stack (proposal, not yet decided) [AI: REFERENCE]
+# Tech Stack (decided) [AI: FOLLOW]
 
-Proposal for the commute app (working name TransCo, rebrand pending). Once the team agrees, the decisions go in the Decisions Log in prep-plan.md and this label changes to [AI: FOLLOW]. Researched 2026-10-26 with Context7 and official docs.
+Stack for the terminal commute app (working name TransCo, rebrand pending), decided 2026-10-26. Built on the terminal pivot in `terminal-pivot.md`. The Decisions Log in `prep-plan.md` records each choice and wins if anything here goes stale. Researched with Context7 (Expo, rnmapbox, Supabase, RevenueCat, Laravel, Railway, Render docs).
+
+This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowledge from the team's other Expo + Supabase app, not its code.
 
 ## The short version
 
 | Layer | Pick | Why |
 | --- | --- | --- |
-| App | **Laravel React starter kit** (Laravel 13, Inertia 3, React 19, TypeScript, Tailwind 4, shadcn/ui) | Our planned stack; auth comes ready. Needs **PHP 8.3+** on every laptop. |
-| Database | **Supabase Postgres** (session pooler, `DB_SSLMODE=require`) | As planned in prep-plan section 2. No PostGIS needed: route lines are stored as GeoJSON. |
-| Map (decided) | **Mapbox GL JS via `react-map-gl/mapbox`** | Map, route lines, moving jeepney markers. Free up to 50,000 map loads a month. |
-| Route snapping | **Mapbox Map Matching API** | Turns a driver's noisy GPS trace into a clean road-following route line. Free up to 100,000 requests a month. |
-| ETA | **Mapbox Directions API** (or distance left on the route divided by average speed) | Free up to 100,000 requests a month. |
-| Fare and distance math | **Turf.js** | Distance along a route between two points, nearest point on a route. |
-| Live updates (decided) | **Polling every 5 seconds** | Drivers send location, commuters re-fetch. At most a few hundred jeepneys; no WebSocket server to run. |
-| Payment | **Driver's own GCash or Maya QR Ph code** (real use) and **PayMongo QR Ph in test mode** (demo only, optional) | See "Payment" below. |
-| Deploy | Railway or Render | Must be HTTPS: browser location and screen wake lock only work over HTTPS. |
+| App | **Expo SDK 56** (React Native 0.85, React 19), TypeScript, **Android APK** | The versions we already know work together with NativeWind 4, Reanimated 4, rnmapbox and task-manager |
+| Routing | **Expo Router** (file-based, `app/`) | Route groups per role |
+| Styling | **NativeWind 4** (Tailwind 3), theme tokens in `tailwind.config.js` | Tailwind classes we already use; the designer's colors live in one file |
+| State and forms | **Zustand** (`stores/`), **react-hook-form + Zod** (`lib/validation.ts`) | Team comfort; few stores, few forms |
+| Backend | **Supabase only, no custom server**: Auth, Postgres + **PostGIS**, **RLS**, RPCs, **Realtime**, Edge Functions (Deno) | One service, one language (TypeScript), nothing of our own to host |
+| Map | **Mapbox** via `@rnmapbox/maps` | Custom style from the designer (Mapbox Studio). Route lines are **stored once**, no live routing API |
+| Live updates | **Supabase Realtime** on vehicle positions and status | No polling code |
+| Driver GPS | **expo-location + expo-task-manager** (background task, Android foreground service) | Keeps sharing while the screen is off; the reason we build an APK |
+| QR | **expo-camera** (scan) + **react-native-qrcode-svg** (show) | Boarding QR and payment QR |
+| Push (after H10) | **expo-notifications + Expo Push**, sent by a `send-push` Edge Function | "Your jeep is now loading" |
+| Build | **EAS Build** (cloud APK); backup: `npx expo run:android --variant release` on one laptop | EAS local builds do not support Windows; `expo run:android` does |
+| Tooling | ESLint 9 (`eslint-config-expo`) + Prettier, Husky + lint-staged blocks commits with ESLint errors | Same as our other app |
+
+**Not used:** Laravel, Inertia, Filament, Railway or Render (nothing to host), Turf.js, Mapbox Map Matching and Directions, PayMongo, **RevenueCat** (subscriptions go in the pitch only, see below), Supabase Storage, pg_cron. Do not install a package until a screen uses it.
+
+## What every laptop needs
+
+- **Node 22 LTS** (Expo SDK 56 needs 20.19 or newer)
+- Git, VS Code, an Android phone with our **dev build** installed
+- **EAS CLI** (`npm i -g eas-cli`) and the **Supabase CLI** (run as `npx supabase`, check it works on Windows before the event)
+- **One laptop only:** Android Studio (the Android SDK version Expo's setup guide asks for) + **JDK 17**, as the local build backup
+- No PHP, Composer or local database
+
+**Accounts (one person each):** Expo (EAS), Supabase (one project, **Singapore** region), Mapbox (public token), Firebase (FCM credentials for push, after H10).
 
 ## How each feature works
 
-### Accounts (two types, plus admin)
-- One `users` table with a `role`: `commuter`, `driver`, `admin` (cooperative or LGU staff who approve routes and set fares).
-- Starter kit handles register, login and password reset. We add the role and a Policy per action.
+### Accounts and roles
+- Supabase Auth, **email + password**. **Email confirmation off** for the demo (the built-in email sender is heavily rate-limited; exact limit not checked).
+- `profiles.role`: `commuter`, `driver`, `coop`. Everyone signs up as a commuter. **Users can never change their own role**: driver and coop accounts are seeded or promoted by us (or a later coop RPC), never from the client.
+- Session stored with AsyncStorage. The app holds only the anon (publishable) key.
+- Expo Router groups: `app/(auth)`, `app/(commuter)`, `app/(driver)`, `app/(coop)`. The role picks the home screen.
 
-### Live PUJ tracking (driver and commuter)
-1. Driver logs in, picks their route and plate, taps **Start trip**.
-2. The page asks for location permission and calls `navigator.geolocation.watchPosition`, sending the position to Laravel every 5 to 10 seconds.
-3. It also requests a **screen wake lock** so the phone screen stays on. Browsers pause location when the screen turns off or the tab is hidden, so the driver's phone must stay on that page (mounted on the dashboard, charging).
-4. Commuter's map re-fetches active jeepneys on that route every 5 seconds and moves the markers.
-5. Driver taps **End trip**; their location stops being shared and is no longer shown.
+### Core flow: terminal and fare guide (Must-have)
+1. Commuter picks a terminal (list, or nearest by GPS through PostGIS) and a destination.
+2. App shows the vehicle type, the fare from the **fare matrix** (regular and discounted), the route line on the map, and which vehicles are **now loading** or **departed**.
+3. Fares come from the `routes` table, one row per terminal and destination. **Per destination only**, no drop-off points along the way.
+4. **Buses are info only** (terminal and fare); bus lines already sell tickets online.
+5. Fare values: Naga tricycles per City Ord. 2024-002; jeepney fares still **need confirming** with the coop or LTFRB Region V.
 
-Mapbox does not track anything by itself: the phone's GPS gives the position, Mapbox draws it and estimates arrival time.
+### Coop screens (Must-have)
+- Coop users edit their terminals, routes and fares, and vehicles, inside the app.
+- Place a terminal with the map pin picker. Route lines are drawn or entered once and stored as GeoJSON.
+- RLS lets a coop user write only rows of their own coop.
 
-Limit to say out loud in the pitch: a web page cannot track in the background. A real rollout would wrap the driver page in a native app or use a GPS device per jeepney.
+### Live tracking and status (after the core flow)
+1. Driver taps **Start trip**. The app asks for location ("Allow all the time") and starts a background location task with a foreground service notification, about every **5 s**.
+2. Each fix calls the `update_my_location` RPC, which upserts that driver's row in `vehicle_positions`.
+3. Driver sets **now loading** or **departed** (`set_vehicle_status` RPC). A dispatcher or coop user can also change it from the coop screens.
+4. Commuter screens subscribe to Realtime on `vehicle_positions` and `vehicles`, and hide a vehicle whose position is older than **15 s**.
+5. **End trip** stops the task and sets the vehicle off duty.
 
-### Routes (crowdsourced and from LGUs)
-- **Record a route:** a driver taps **Record route** and drives it; the GPS points are sent to the Map Matching API (100 points per request, so long trips are split) and come back as a clean line along real roads. Saved as a draft.
-- **Draw a route:** an admin draws or fixes a route on the map (for routes the LGU points out).
-- **Approve:** an admin approves drafts before commuters see them. Unapproved crowdsourced routes are never shown as official.
+Limit to say in the pitch: tracking runs while the driver's app keeps its foreground service on; a real rollout may need a GPS unit per vehicle.
 
-### Route and fare lookup (the core flow)
-1. Commuter sets where they are (GPS or tap the map) and where they are going.
-2. The app finds approved routes that pass near both points.
-3. Shows where to wait, where to get off, and the fare: distance along the route between the two points (Turf.js), then the fare rule (minimum fare for the first km band plus a rate per extra km).
-4. Fare rules live in a `fare_rules` table an admin can edit (jeepney, tricycle, discounted). The current Bicol jeepney rate is **not confirmed yet**: confirm with LTFRB Region V, the city PSO or a cooperative.
+### Boarding QR (after the core flow)
+- Each vehicle has a random reusable `board_token` (in `vehicle_tokens`), shown as a QR on the driver's screen.
+- Commuter scans it with the in-app scanner. The app calls `board_vehicle(token, lat, lng)` with the commuter's current location.
+- The RPC accepts only if the vehicle's position is fresh and within about **100 m** (`ST_DWithin`); otherwise it rejects. This stops a photo of the QR being scanned from anywhere.
+- A boarding gives the commuter a **trip record** and the driver a **passenger count**.
+- The commuter's location is used for that check only and never stored.
 
 ### Payment (third party, we never hold money)
+- Each vehicle has one `payment_qr` text field, filled with the **coop's QR Ph code by default** (the coop may use the driver's own instead).
+- The coop scans its printed QR once with the in-app scanner; we store the QR text and redraw it with react-native-qrcode-svg. No image uploads.
+- After boarding or a fare lookup the app shows "Pay ₱__" next to that QR. The commuter pays in their own wallet app.
+- **No payment confirmation** in the MVP: the driver checks their wallet notification. Cash is always fine.
 
-The team's two-scan (tap-in, tap-out) idea, its fixes and alternatives are in `payment-flow.md`; not decided yet.
+### Push notifications (Satisfier, after H10)
+- A status change triggers `send-push` through pg_net, with the shared secret kept in Vault.
+- Needs the dev build (push does not work in Expo Go on Android since SDK 53) and FCM credentials from Firebase.
 
-- **Real-world version:** each driver uploads their own GCash or Maya QR Ph code. At the end of a lookup the app shows "Pay P__" next to that QR; the passenger pays from their own wallet. We never touch the money. We also cannot confirm the payment happened.
-- **Demo version (optional):** PayMongo QR Ph in **test mode** creates a QR for the exact fare and reports "paid" back to us through a webhook, so the driver screen can show a check mark.
-  - Test mode moves no money, but PayMongo warns its test QR codes are real: **never scan them with a real wallet**, it processes a real payment. Use the `test_url` to simulate payment.
-  - In live mode the money goes into whoever owns the PayMongo account. If that is us, we would be holding passengers' money, which goes against our decision. Live use only makes sense if each cooperative has its own account.
-  - Not confirmed: whether test keys are available before PayMongo verifies the account.
-
-## Security (non-negotiable, per CLAUDE.md)
-- Location updates: auth middleware, a Policy so a driver can only update their own active trip, Form Request validation (latitude -90 to 90, longitude -180 to 180), and throttling.
-- Fares used for payment are computed on the server, never trusted from the browser.
-- Mapbox: only a **public** token in the frontend, restricted to our domains in the Mapbox account. Any secret token and the PayMongo secret key stay in `.env`.
-- PayMongo webhooks: verify the signature before marking anything paid.
-- Commuters' locations are used in the browser only and never stored. Drivers' locations are stored only during an active trip.
+### Monetization (pitch only, not built)
+- Coops or the LGU pay a small monthly fee per terminal for the dashboard and live tracking; commuters ride free.
+- A consumer subscription (RevenueCat) was rejected: about ₱570 a month against a ₱14 fare, and real purchases need the app on Google Play.
 
 ## Data (first draft)
-- `users` (role)
-- `routes` (name, vehicle type, GeoJSON line, status draft/approved, source crowdsourced/LGU/admin)
-- `fare_rules` (vehicle type, base fare, base km, per km, discount)
-- `trips` (driver, route, plate, started_at, ended_at)
-- `trip_locations` (trip, lat, lng, recorded_at); keep only recent points
-- `route_traces` (driver, raw points) for crowdsourced recording
+
+| Table | Holds | RLS in short |
+| --- | --- | --- |
+| `profiles` | user id (= `auth.uid()`), role, name, coop | read own; update own name only, never role |
+| `coops` | name, type (jeepney coop, TODA, bus) | public read |
+| `terminals` | coop, name, location (PostGIS point) | public read; coop writes own |
+| `routes` | terminal, destination, vehicle type, route line (GeoJSON), regular fare, discounted fare | public read; coop writes own |
+| `vehicles` | coop, plate, vehicle type, route, driver, status, `payment_qr` | public read; coop writes own; status changes via RPC |
+| `vehicle_tokens` | vehicle, `board_token` | its own table because RLS hides rows, not columns; only that vehicle's driver reads it; `board_vehicle` reads it |
+| `vehicle_positions` | vehicle (one row each), location, updated_at | public read; writes only through `update_my_location` |
+| `boardings` | commuter, vehicle, boarded_at | commuter reads own; driver reads count for own vehicle; insert only through `board_vehicle` |
+| `push_tokens` (after H10) | user, Expo push token | user reads and writes own |
+
+## Security model (non-negotiable)
+
+- The app only holds the **anon key**. The service role key never goes in the app or the repo.
+- **RLS on every table**, with REVOKEs for anything anon or authenticated users should not have (new tables are exposed automatically).
+- Reads and writes use `auth.uid()`. Never send the user's id from the client.
+- Anything that spans tables or needs extra checks goes through a **SECURITY DEFINER RPC** with `set search_path = ''`, which checks `auth.uid()` and validates input itself (latitude -90 to 90, longitude -180 to 180, status in the allowed list).
+- Edge Functions called by the database run with Verify JWT off and check a secret header that matches a Vault secret.
+- Mapbox: public token only, restricted in the Mapbox account.
+- Fares shown for payment come from the database, never from the client.
+- `.env` never committed.
+
+## How we work in the code
+
+**Folders**
+```
+app/          routes (Expo Router)
+components/   UI grouped by feature (commuter/, driver/, coop/)
+hooks/        per-screen data hooks
+stores/       Zustand global state
+lib/          supabase client, lib/api/<feature>.ts data layers, validation.ts
+types/        shared TS types
+supabase/     migrations/, functions/, checks/
+```
+Data flows screen → hook → `lib/api/<feature>.ts` → Supabase (a table query under RLS, or `supabase.rpc(...)`).
+
+**Database**
+- Every schema change is a migration made with `npx supabase migration new <name>`.
+- Migrations are idempotent anyway: `IF NOT EXISTS`, `DROP POLICY IF EXISTS` before `CREATE POLICY`, `CREATE OR REPLACE FUNCTION`.
+- Whoever adds a table writes its RLS policies and REVOKEs **in the same migration**.
+- Only the **integrator** runs `npx supabase db push` and `npx supabase functions deploy`, so two people never push at once.
+- Name an Edge Function before its first deploy; the URL slug cannot change later.
+
+**RLS check (integrator, before each merge)**
+- `supabase/checks/rls.sql`: read-only, lists every public table and confirms RLS is on, then tries each table as a logged-out user. Every row should read OK.
+- Behaviour checks run inside a transaction that is always rolled back.
+
+**Dev loop**
+- `npm start`: Metro with hot reload for JS changes, on the dev build.
+- **Install every native module before the first dev build**: `@rnmapbox/maps`, `expo-location`, `expo-task-manager`, `expo-camera`, `expo-notifications`, `react-native-svg`, `react-native-qrcode-svg`. Adding one later means all three of us rebuild (`npm install`, `npx expo prebuild -p android`, `npm run android`).
+- No app test suite. We test on real phones.
+
+**Team**
+- Work is split by feature, not frontend and backend. Each person owns whole role screens end to end.
+- Integrator: **[INTEGRATOR: NAME NEEDED]**. Merges, runs `db push`, function deploys, the RLS check and EAS builds.
+- Docs: the Decisions Log in `prep-plan.md` and the feature table in its section 1. No per-tab handoffs for the 24 hours.
 
 ## Before building, check
-1. Everyone has **PHP 8.3+**, Composer and Node installed (starter kit requirement).
-2. Someone creates a **Mapbox account** and a public token (whether a credit card is needed at sign-up was not confirmed).
-3. Test location on a real phone over **HTTPS** early (deployed preview), since localhost on a laptop does not prove the phone flow works.
-4. Fallback if Mapbox sign-up blocks us: `react-map-gl/maplibre` with free OpenStreetMap-based tiles; same components, no Map Matching API.
+
+1. The first **EAS dev build** works and installs on all three phones. Do this first: nobody can test the driver flow without it.
+2. Mapbox account and public token; follow the rnmapbox Expo install guide for any extra token it asks for (not checked).
+3. Supabase project in Singapore, **PostGIS enabled**, email confirmation off, CLI linked on the integrator's laptop.
+4. Background location on a real Android phone with the screen off, early.
+5. Confirmed jeepney fares from the coop.
 
 ## Sources
-- Laravel React starter kit (via Context7): `/laravel/react-starter-kit`
-- react-map-gl (via Context7): `/visgl/react-map-gl`
-- [Mapbox pricing](https://www.mapbox.com/pricing), [Map Matching API](https://docs.mapbox.com/api/navigation/map-matching/)
-- [MDN watchPosition](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition), [MDN Screen Wake Lock](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API)
-- [PayMongo QR Ph API](https://developers.paymongo.com/docs/qr-ph-api), [PayMongo testing](https://docs.paymongo.com/docs/payment-acceptance-testing)
+
+- Expo (via Context7): SDK version table, `expo-location` background tasks and config plugin, TaskManager not in Expo Go on Android, EAS APK build profiles, local build limits, push in Expo Go
+- `@rnmapbox/maps` (via Context7): not in Expo Go, config plugin, `styleURL`, `LineLayer`
+- Supabase (via Context7): Expo quickstart, Edge Functions runtime (Deno, TypeScript only)
+- RevenueCat (via Context7): Play Console upload needed for real purchases, Test Store limits

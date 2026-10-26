@@ -1,6 +1,6 @@
-# Terminal Pivot (proposal, for team review) [AI: REFERENCE]
+# Terminal Pivot (decided) [AI: REFERENCE]
 
-Rj's clarified version of the terminal pivot (2026-10-26). It replaces the "proposed" pivot row in the Decisions Log. Once the team agrees, it goes in the Decisions Log as decided, and feasibility.md, tech-stack.md and payment-flow.md are rewritten to match.
+Rj's clarified version of the terminal pivot (2026-10-26). **Decided by the team on Oct 26**; the answers to the open questions below are in the Decisions Log, and the build details are in `tech-stack.md`.
 
 ## The idea
 

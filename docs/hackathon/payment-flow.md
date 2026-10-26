@@ -1,4 +1,6 @@
-# Payment Flow (proposal, not yet decided) [AI: REFERENCE]
+# Payment Flow (superseded) [AI: REFERENCE]
+
+**Superseded on Oct 26 by the terminal pivot.** The two-scan flow is dropped; the decided payment and boarding flow is in `tech-stack.md`. Kept as history.
 
 The team's two-scan QR fare idea, an assessment of it, and simpler alternatives. Nothing here is decided yet: once the team picks, the decision goes in the Decisions Log in prep-plan.md and the flow moves into tech-stack.md.
 

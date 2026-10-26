@@ -16,7 +16,7 @@
 4. **PUJ tracking: driver accounts.** Two account types, driver and commuter. A driver starts a trip and their phone shares its GPS location every few seconds through the web app; Mapbox shows the jeepney moving on the commuter's map and helps estimate arrival time.
 5. **Commute guide A to B:** set where you are and where you are going; the app finds routes that pass near both.
 
-**Stack (proposal):** Laravel 13 React starter kit, Supabase Postgres, Mapbox via react-map-gl, Turf.js, polling for live updates. See `docs/hackathon/tech-stack.md`.
+**Stack (decided Oct 26):** Android APK in Expo SDK 56 + NativeWind, Supabase as the whole backend, Mapbox via @rnmapbox/maps. See `docs/hackathon/tech-stack.md`. The feature list above is the earlier A-to-B version; the terminal pivot (`docs/hackathon/terminal-pivot.md`) replaces it.
 
 **Name and selling point:** being reworked with the team's designer; not decided yet.
 

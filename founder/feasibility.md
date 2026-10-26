@@ -17,25 +17,11 @@ Inputs: `founder/idea.md`, `founder/competitors.md`, and the Court trial (`.cour
 | 4 | Jeepney tracking with ETA | Yes, approximate | Driver opens the web app, the browser sends its location every 10 s; passengers' page refreshes; ETA = distance left on the route / average speed | Browsers stop sending location when the screen is off; real use needs a native app or a GPS device. Demo with one real phone plus simulated jeeps |
 | 5 | Commute guide A to B | Single route: yes. With transfers: no | "Which route passes near both points" is a simple search; transfers need a route graph | Transfers are a Delighter at best |
 
-## Kano scope (proposal)
+## Kano scope
 
-**Must-have (H2.5 to H10), the one core flow:**
-A commuter picks where they are and where they are going on the map, sees which jeepney route to take, where to wait, where to get off, and the correct fare.
-- Routes and stops for Naga (start with 2 or 3 routes fully, then the rest)
-- Fare computation
-- Simple admin page where a cooperative or the city updates routes and the fare rate (this is what makes it "empower a local group")
+**Replaced on Oct 26 by the terminal pivot.** The current Kano scope is in `docs/hackathon/prep-plan.md` section 3.3, and the stack is in `docs/hackathon/tech-stack.md`. The feature table above describes the earlier A-to-B route idea and is kept as history.
 
-**Satisfiers (H10 to H16):**
-- Live jeepney location and ETA (driver mode)
-- "Pay the exact fare" with the driver's QR Ph code (1b)
-- Tricycle fare lookup from the city matrix
-- PWA install
-
-**Delighters (only if all of the above is deployed):**
-- Simulated beep-style wallet with QR scan (1c) or NFC tap (1d)
-- Transfers in the commute guide
-
-**Cut:** real payment processing (1a).
+Still true from this file: no real payment processing (1a), confirm fares with a coop or LTFRB Region V, and name a partner (a TODA or terminal coop).
 
 ## Theme fit
 
