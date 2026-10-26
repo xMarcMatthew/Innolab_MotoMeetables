@@ -59,6 +59,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "simulate": "node --env-file=.env scripts/simulate-jeeps.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

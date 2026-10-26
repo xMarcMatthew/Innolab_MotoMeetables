@@ -7,7 +7,7 @@ Notes between the three of us while we build in parallel. **Newest section on to
 ## Oct 28 (morning), JM → Matt and Rj: demo board loaded, push cut, demo on the dev build
 
 - **Demo board is live** (`supabase/seed/demo.sql`): 12 more sample jeeps, `SMP-1003` to `SMP-3002`. Search Pacol now shows "now loading" counts, and SMP-1005 (₱26.00 vs the ₱24.20 guide) and SMP-2004 (₱35.00 vs ₱32.80) show "Above the official fare". Rj's `naga.sql` rows are untouched. Checks after loading: 66/66, 12/12, 28 OK.
-- **Next (JM): a simulator** that moves SMP-1003, SMP-1006, SMP-2003 and SMP-2007 along their route lines, so the map is alive without four phones. The pitch says those are simulated.
+- **Simulator works** (tested on JM's phone): `npm run simulate` moves SMP-1003, SMP-1006, SMP-2003 and SMP-2007 along their route lines, so the map is alive without four phones. The pitch says those are simulated. To run it on your laptop: add `DEMO_DRIVER_PASSWORD=` to your `.env` (ask JM for the value; the demo accounts already exist), then `npm run simulate`; Ctrl+C stops it. Only one laptop should run it at a time.
 - **Decisions:** push notifications are **cut** (next steps in the pitch). The demo runs on the **dev build**, served with `npx expo start --no-dev --minify`, on a phone's hotspot.
 - **Matt, small gap on Waiting** (your screen, note only): "Check again" only lets a `driver` through, so an account promoted to `coop` sees "Your coop has not added you yet" until it signs out and back in (the start screen then sends it to `/coop`). Maybe send any non-commuter role to `/` instead.
 - **Rj:** your coop Vehicles screen will list the 12 demo jeeps. If you need them gone, the undo block at the bottom of `demo.sql` removes only those.
