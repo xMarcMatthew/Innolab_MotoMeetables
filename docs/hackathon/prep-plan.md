@@ -45,7 +45,7 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 | **Must-have features** | See section 3.3. |
 | **Web or mobile** | Android APK (Expo dev build, EAS Build) |
 | **Backend** | Supabase only, no custom server (see tech-stack.md) |
-| **Current hour / phase** | Scaffold, NativeWind + Palette A, all native modules, `eas.json` and the lint hook are in; **the first EAS dev build works on JM's phone** (role picker, live reload, Camera/Location "Allow all the time"/Notifications permissions all checked). Team notes in `handoff.md`. **Supabase migration 1 is live** (all tables, RLS, driver status and fare functions; checks pass on the live database). Next (JM): install the dev build on all three phones, lint hook, then login and roles in the app. Rj can start seeding Naga terminals and fares (columns in tech-stack.md); Matt the commuter screens. |
+| **Current hour / phase** | Scaffold, NativeWind + Palette A, all native modules, `eas.json` and the lint hook are in; **the first EAS dev build works on JM's phone** (role picker, live reload, Camera/Location "Allow all the time"/Notifications permissions all checked). Team notes in `handoff.md`. **Supabase migration 1 is live** (all tables, RLS, driver status and fare functions; checks pass on the live database). Next (JM): login and roles in the app. Matt and Rj: pull, follow the setup in `handoff.md` (install the dev build on your phone), then Matt the commuter screens and Rj the seed data (A/B fare question first). |
 
 ## 1. How We Work [AI: REFERENCE]
 
@@ -134,9 +134,9 @@ Laravel connects to the database as one Postgres user, so Supabase RLS no longer
 
 - [x] Repo created by Matt on GitHub (double-check all 3 members have push access)
 - [ ] Node 22 LTS, Git, EAS CLI on all 3 laptops; Android Studio + JDK 17 on one laptop (build backup)
-- [ ] Expo SDK 56 app created (Expo Router + NativeWind), every native module from tech-stack.md installed, pushed to the repo
-- [ ] Supabase project created (Singapore), PostGIS on, email confirmation off, CLI linked on the integrator's laptop, first migration pushed
-- [ ] First EAS dev build installed on all 3 phones
+- [x] Expo SDK 56 app created (Expo Router + NativeWind), every native module from tech-stack.md installed, pushed to the repo
+- [x] Supabase project created (Singapore), PostGIS on, CLI linked on the integrator's laptop, first migration pushed (email confirmation off: JM to double-check in the dashboard)
+- [ ] First EAS dev build installed on all 3 phones (JM's done; Matt and Rj via `handoff.md`)
 - [ ] Auth works: register, login, logout
 - [ ] Everyone has cloned and run it: `npm install`, `npm start`, opens on their phone's dev build
 - [ ] .env values (Supabase URL and anon key, Mapbox public token) shared privately, not in the repo

@@ -38,7 +38,7 @@ Seed coops, terminals, routes (fare guide) and vehicles as a SQL file JM can run
 
 ### Matt
 - `.env` still has the placeholder `EXPO_PUBLIC_MAPBOX_STYLE_URL`; send JM your style URL when it is ready (the map can use a default Mapbox style until then).
-- Route lines are stored as GeoJSON in `routes.route_line`; GeoJSON coordinates are **[lng, lat]**. Please double-check `data/routes/pacol-centro.geojson` uses that order.
+- Route lines are stored as GeoJSON in `routes.route_line`; GeoJSON coordinates are **[lng, lat]**. Checked: `data/routes/pacol-centro.geojson` and `san-felipe-centro.geojson` already use that order.
 - Matching a pinned or searched destination to the nearest served destination needs a small database function; tell JM the inputs and outputs you want and JM adds it in a migration.
 
 ### Next (JM)

@@ -50,7 +50,7 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 1. Commuter picks where they want to go, two ways like Google Maps: **search** a place and pick from the result list, or **drop a pin** on the map.
 2. The app matches it to the nearest destination we serve (a PostGIS distance function, still to be written) and shows **what to ride and which terminal to go to**; when several terminals serve it, the nearest to the commuter comes first.
 3. For each option: vehicle type, the vehicles' own fares, the **official fare guide** (regular and discounted), the route line on the map, and which vehicles are **now loading** or **departed**.
-4. **Fares:** each driver sets their own fare on their vehicle. The coop's fare matrix in the `routes` table is the official guide, one row per terminal and destination, **per destination only**. A driver's fare above the guide is labelled "Above the official fare". No in-app report; commuters dispute it themselves using the guide.
+4. **Fares:** each driver sets their own fare on their vehicle. The official guide (LTFRB rates for jeepneys, the city ordinance for tricycles, see 7) is stored in the `routes` table, one row per terminal and destination, **per destination only**. A driver's fare above the guide is labelled "Above the official fare". No in-app report; commuters dispute it themselves using the guide.
 5. **Buses get the full features**, same as jeepneys and tricycles; a bus operator registers as a coop-type account.
 6. Place search: Mapbox Search/Geocoding API (not checked yet: free tier and how well it knows Naga places; fallback is searching our own destination names).
 7. Fare guide values: Naga tricycles per City Ord. 2024-002 (₱15, 20% discount); jeepneys per the **LTFRB national rates** from Sept 28, 2026 (traditional ₱14 for the first 4 km + ₱2/km, modern ₱17 + ₱2.40/km, 20% discount). Sources in `research.md`.
@@ -157,8 +157,8 @@ App code lives under `src/` (the SDK 56 template's layout); import it as `@/...`
 
 ## Before building, check
 
-1. The first **EAS dev build** works and installs on all three phones. Do this first: nobody can test the driver flow without it.
-2. Mapbox account and public token; follow the rnmapbox Expo install guide for any extra token it asks for (not checked).
+1. The first **EAS dev build** works and installs on all three phones. Done on JM's phone Oct 27; Matt and Rj install it via `handoff.md`.
+2. ~~Mapbox account and public token.~~ Done: the public token works, and no extra download token is needed (rnmapbox docs; the build compiled without one). Matt's style URL is still pending.
 3. ~~Supabase project in Singapore, PostGIS enabled, email confirmation off, CLI linked on the integrator's laptop.~~ Done Oct 26: migration 1 pushed; live checks 22/22 OK and 31/31 PASS.
 4. Background location on a real Android phone with the screen off, early.
 5. Jeepney fares per destination worked out from the LTFRB per-km rates (distance of each route).
