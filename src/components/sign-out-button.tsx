@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { endTrip, isOnTrip } from "@/lib/trip";
 
 // End a running trip first: once signed out, the GPS task could no longer send, but would keep running.
-async function signOut() {
+export async function signOut() {
   if (await isOnTrip()) await endTrip().catch(() => {});
   await supabase.auth.signOut();
 }

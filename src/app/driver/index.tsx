@@ -6,7 +6,6 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "r
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { FirstTripChecklist } from "@/components/driver/first-trip-checklist";
 import { FormField } from "@/components/form-field";
-import { SignOutButton } from "@/components/sign-out-button";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
 import { setFare, setStatus, type VehicleStatus } from "@/lib/api/driver";
 import { endTrip, isOnTrip, startTrip, type StartTripResult } from "@/lib/trip";
@@ -96,7 +95,6 @@ export default function DriverHome() {
         <Pressable accessibilityRole="button" onPress={reload}>
           <Text className="font-semibold text-primary">Check again</Text>
         </Pressable>
-        <SignOutButton />
       </View>
     );
   }
@@ -210,9 +208,6 @@ export default function DriverHome() {
       </View>
 
       {actionError && <Text className="text-destructive">{actionError}</Text>}
-      <View className="items-center">
-        <SignOutButton />
-      </View>
     </ScrollView>
   );
 }
