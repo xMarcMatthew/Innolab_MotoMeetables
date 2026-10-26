@@ -5,10 +5,11 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "r
 
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { FirstTripChecklist } from "@/components/driver/first-trip-checklist";
+import { PaymentQrSection } from "@/components/driver/payment-qr-section";
 import { FormField } from "@/components/form-field";
 import { SignOutButton } from "@/components/sign-out-button";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
-import { setFare, setStatus, type VehicleStatus } from "@/lib/api/driver";
+import { setFare, setMyPaymentQr, setStatus, type VehicleStatus } from "@/lib/api/driver";
 import { endTrip, isOnTrip, startTrip, type StartTripResult } from "@/lib/trip";
 import { type Fare, fareSchema } from "@/lib/validation";
 
@@ -208,6 +209,13 @@ export default function DriverHome() {
           <Text className="font-semibold text-white">Save fare</Text>
         </Pressable>
       </View>
+
+      <PaymentQrSection
+        qr={vehicle.payment_qr}
+        fare={vehicle.driver_fare ?? route?.guide_fare_regular ?? null}
+        busy={busy}
+        onSave={(qr) => run(() => setMyPaymentQr(qr))}
+      />
 
       {actionError && <Text className="text-destructive">{actionError}</Text>}
       <View className="items-center">

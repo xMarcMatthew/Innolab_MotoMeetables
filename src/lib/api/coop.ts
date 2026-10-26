@@ -96,6 +96,8 @@ export type Vehicle = {
   status: VehicleStatus;
   route_id: string | null;
   driver_id: string | null;
+  payment_qr: string | null;
+  payment_qr_by_driver: boolean;
   route: { destination_name: string; terminal: { name: string } } | null;
   driver: { full_name: string | null } | null;
 };
@@ -131,7 +133,7 @@ export async function listMyVehicles(): Promise<Vehicle[]> {
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, plate, vehicle_type, status, route_id, driver_id, route:routes(destination_name, terminal:terminals(name)), driver:profiles(full_name)",
+      "id, plate, vehicle_type, status, route_id, driver_id, payment_qr, payment_qr_by_driver, route:routes(destination_name, terminal:terminals(name)), driver:profiles(full_name)",
     )
     .eq("coop_id", coopId)
     .order("plate");
