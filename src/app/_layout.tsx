@@ -34,6 +34,11 @@ export default function RootLayout() {
         <Stack.Screen name="commuter/index" />
         <Stack.Screen name="driver/index" />
         <Stack.Screen name="coop/index" />
+        <Stack.Screen name="coop/terminal" />
+        <Stack.Screen name="coop/routes" />
+        <Stack.Screen name="coop/route" />
+        <Stack.Screen name="coop/vehicles" />
+        <Stack.Screen name="coop/vehicle" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
