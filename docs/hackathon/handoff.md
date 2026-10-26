@@ -4,6 +4,24 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (later), JM → Matt and Rj: destination search is live (migration 2)
+
+**Matt:** the search you asked for is in the live database.
+```ts
+const { data, error } = await supabase.rpc("nearest_routes", {
+  p_dest_lat: pin.lat, p_dest_lng: pin.lng,
+  p_my_lat: me?.lat, p_my_lng: me?.lng, // optional: send both or neither
+});
+```
+- Returns up to 10 rows, one per route, closest first: `route_id`, `destination_name`, `vehicle_type`, `terminal_id`, `terminal_name`, `terminal_lat`, `terminal_lng`, `guide_fare_regular`, `guide_fare_discounted`, `drop_m` (pin to the nearest point of the route line, or to the destination when a route has no line) and `terminal_m` (you to the terminal; null without your location).
+- No distance cutoff: when every `drop_m` is large, show "drops you X km away" and pick your own threshold.
+- Route lines and vehicles are separate reads, as agreed: `supabase.from("routes").select("id, route_line").in("id", ids)` and `supabase.from("vehicles").select("route_id, status, driver_fare, plate").in("route_id", ids)`.
+- Drops within 100 m count as a tie; then the terminal nearest the commuter comes first.
+
+**Rj:** `routes.route_line` must be a bare GeoJSON **LineString** with at least 2 points, `{"type": "LineString", "coordinates": [[lng, lat], ...]}`. Matt's files in `data/routes/` are whole FeatureCollections, so seed only the geometry of the feature whose `kind` is `route`. The database refuses anything else.
+
+---
+
 ## Oct 27 (later), JM → Matt and Rj: driver screen works
 
 - The driver home shows the driver's vehicle, route and official fare guide, with **Now loading / Departed / Off duty** buttons and a fare field ("Above the official fare" when higher). Tested on JM's phone with throwaway TEST rows, since deleted.
