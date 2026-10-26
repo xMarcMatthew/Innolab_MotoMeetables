@@ -1,11 +1,18 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Skill(founder-skill:founder-consumer)"
+    ]
+  },
   "enabledPlugins": {
     "ponytail@ponytail": true,
     "court-skill@court-skill": true,
     "ui-ux-pro-max@ui-ux-pro-max-skill": true,
     "document-skills@anthropic-agent-skills": true,
-    "example-skills@anthropic-agent-skills": true
+    "example-skills@anthropic-agent-skills": true,
+    "founder-skill@founder-skill": true,
+    "mattpocock-skills@mattpocock": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -30,6 +37,18 @@
       "source": {
         "source": "github",
         "repo": "anthropics/skills"
+      }
+    },
+    "founder-skill": {
+      "source": {
+        "source": "github",
+        "repo": "Jakeschincariol/founder-skill"
+      }
+    },
+    "mattpocock": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/mattpocock/skills.git"
       }
     }
   }

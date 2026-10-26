@@ -6,10 +6,10 @@
    - Windows (PowerShell): `setx CONTEXT7_API_KEY "your-key"`, then fully close and reopen VS Code.
    - macOS / Linux: add `export CONTEXT7_API_KEY="your-key"` to `~/.zshrc` or `~/.bashrc`, then open a new terminal.
 2. Make sure Python 3 is installed (`python --version`). UI/UX Pro Max and Court need it.
-3. Open the repo in Claude Code and accept the trust prompt. That registers our 4 plugin marketplaces from `.claude/settings.json`. Then open `/plugin` and click **Install** on these 5, and check each is toggled on: **ponytail**, **court-skill**, **ui-ux-pro-max**, **document-skills**, **example-skills**. Skip the other Anthropic ones (claude-api, academy-guide, and so on).
+3. Open the repo in Claude Code and accept the trust prompt. That registers our plugin marketplaces from `.claude/settings.json`. Then open `/plugin` and click **Install** on these 7, and check each is toggled on: **ponytail**, **court-skill**, **ui-ux-pro-max**, **document-skills**, **example-skills**, **founder-skill**, **mattpocock-skills**. Skip the other Anthropic ones (claude-api, academy-guide, and so on).
 4. Approve the `context7` MCP server when Claude Code asks (it comes from `.mcp.json`).
 5. Run `/reload-plugins` (or restart Claude Code), then check:
-   - `/skills` lists ponytail, court, ui-ux-pro-max, pptx, frontend-design, and webapp-testing.
+   - `/skills` lists ponytail, court, ui-ux-pro-max, pptx, frontend-design, webapp-testing, founder-competitors, and grill-me.
    - `/mcp` shows context7 as connected.
 6. If a plugin says "enabled in project settings but isn't installed", run `claude plugin install <plugin>@<marketplace> --scope project` with the id from `.claude/settings.json`.
 
@@ -52,9 +52,9 @@ This file lists the Claude skills, MCPs, and connectors our team installed for I
 
 | **Skill** | **Type** | **What It Does** | **When We Use It** | **Source** | **Reviewed?** | **Tested?** |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Matt Pocock Skills** | Planning / Debugging | Small, composable skills. Best ones for us: /grill-me (stress-tests a plan), /diagnosing-bugs (disciplined bug-fixing loop), /prototype. | /grill-me right after locking the idea. /diagnosing-bugs when stuck at 3am. Needs /setup-matt-pocock-skills once per repo (pick local files as the tracker). | [GitHub](https://github.com/mattpocock/skills) | ☐ | ☐ |
+| **Matt Pocock Skills** | Planning / Debugging | Small, composable skills. Best ones for us: /grill-me (stress-tests a plan), /diagnosing-bugs (disciplined bug-fixing loop), /prototype. | /grill-me right after locking the idea. /diagnosing-bugs when stuck at 3am. Needs /setup-matt-pocock-skills once per repo (pick local files as the tracker). Installed as a plugin; setup not run yet. | [GitHub](https://github.com/mattpocock/skills) | grill-me only (no scripts) | ☐ |
 | **Playwright MCP** | Testing (connector) | Lets Claude drive a real browser: click through our flows, catch broken pages, take screenshots. | Testing the core flow before the freeze. Screenshots for the pitch deck. | Microsoft Playwright MCP | ☐ | ☐ |
-| **Founder Skill** (/founder-competitors only) | Research | Maps direct and indirect competitors, their prices, and what their customers complain about, with linked sources. | Feeds the "Current solutions and gaps" step in brainstorming and the pitch. Skip the 100-agent consumer panel, it burns usage. | [GitHub](https://github.com/Jakeschincariol/founder-skill) | ☐ | ☐ |
+| **Founder Skill** (/founder-competitors only) | Research | Maps direct and indirect competitors, their prices, and what their customers complain about, with linked sources. | Feeds the "Current solutions and gaps" step in brainstorming and the pitch. Skip the 100-agent consumer panel, it burns usage (blocked for Claude by a deny rule in `.claude/settings.json`). Writes into a `founder/` folder. | [GitHub](https://github.com/Jakeschincariol/founder-skill) | competitors + consumer only | ☐ |
 | **Graphify** (Mentor) | Codebase mapping | Reads a folder and builds a knowledge graph: an interactive graph.html, a report of key files and surprising connections, and a saved graph Claude can query later with fewer tokens. | Run /graphify . on the fresh Laravel starter kit to see how its folders connect. Optional: run it again at H16 for an architecture visual in the pitch. Install: `pip install graphifyy` (double y, as the official repo says). | [GitHub](https://github.com/safishamsi/graphify) | ☐ | ☐ |
 
 ## Connectors [AI: REFERENCE]
