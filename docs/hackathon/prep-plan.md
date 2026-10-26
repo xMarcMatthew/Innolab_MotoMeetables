@@ -249,7 +249,7 @@ After locking the idea, sort every feature into one of these three buckets befor
 
 **Sleep shifts:** 2 to 3 hour rotations, at least 2 people awake at all times.
 
-## 5. Pitch Structure (aim for 5 mins) [AI: FOLLOW]
+## 5. Pitch Structure (8 mins presentation + 4 mins Q&A) [AI: FOLLOW]
 
 1. **Problem:** who is hurting and why it matters (use a real stat or story)
 2. **Users:** who exactly this is for

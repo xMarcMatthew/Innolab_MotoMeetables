@@ -20,6 +20,60 @@ export const fareSchema = z.object({
     .refine((v) => Number(v) <= 10000, "10,000 at most"),
 });
 
+// Name 1 to 120 and the lat/lng ranges match the terminals checks in migration 1.
+export const terminalSchema = z.object({
+  name: z.string().trim().min(1, "Enter a terminal name").max(120, "120 characters at most"),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+export const VEHICLE_TYPES = ["jeepney", "tricycle", "bus"] as const;
+
+// Route form fields as typed (text). Fare limits and the destination name length match the routes checks in migration 1.
+export const routeFieldsSchema = z
+  .object({
+    destination_name: z
+      .string()
+      .trim()
+      .min(1, "Enter a destination")
+      .max(120, "120 characters at most"),
+    guide_fare_regular: fareSchema.shape.fare,
+    guide_fare_discounted: fareSchema.shape.fare.or(z.literal("")),
+  })
+  .refine(
+    (v) =>
+      v.guide_fare_discounted === "" ||
+      Number(v.guide_fare_discounted) <= Number(v.guide_fare_regular),
+    { message: "Not above the regular fare", path: ["guide_fare_discounted"] },
+  );
+
+// What gets sent: numbers, plus the pin and type that are not text inputs.
+export const routeSchema = z.object({
+  destination_name: z.string().trim().min(1).max(120),
+  destination_lat: z.number().min(-90).max(90),
+  destination_lng: z.number().min(-180).max(180),
+  vehicle_type: z.enum(VEHICLE_TYPES),
+  guide_fare_regular: z.number().min(0).max(10000),
+  guide_fare_discounted: z.number().min(0).max(10000).nullable(),
+});
+
+export const VEHICLE_STATUSES = ["off_duty", "loading", "departed"] as const;
+
+// Plate 1 to 20 matches the vehicles check in migration 1; the form uppercases it before this runs.
+export const vehicleSchema = z.object({
+  plate: z
+    .string()
+    .trim()
+    .min(1, "Enter a plate number")
+    .max(20, "20 characters at most")
+    .regex(/^[A-Za-z0-9 -]+$/, "Letters, digits, spaces and dashes only"),
+  vehicle_type: z.enum(VEHICLE_TYPES),
+  route_id: z.uuid().nullable(),
+  driver_id: z.uuid().nullable(),
+});
+
+export const vehicleStatusSchema = z.enum(VEHICLE_STATUSES);
+
 export type SignIn = z.infer<typeof signInSchema>;
 export type SignUp = z.infer<typeof signUpSchema>;
 export type Fare = z.infer<typeof fareSchema>;

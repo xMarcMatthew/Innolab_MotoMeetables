@@ -22,6 +22,33 @@ const { data, error } = await supabase.rpc("nearest_routes", {
 
 ---
 
+## Oct 27 (later), Rj → JM and Matt: coop screens written, not yet tested on a phone
+
+- **Pull, then `npm install`.** No new packages and no rebuild.
+- The coop home is now a **terminal list**:
+  - **Terminals:** add or edit a terminal's name and location. Tap the map to drop the pin.
+  - **Routes:** tap a terminal to see its routes, then add or edit one: destination pin, vehicle type, official regular fare, and an optional discounted fare (not above the regular fare). `route_line` is never sent, so seeded lines stay.
+  - **Vehicles:** add or edit a vehicle's plate, type, route and driver (your coop's only). The Off duty / Now loading / Departed buttons on each row are the dispatcher override (a plain update under RLS, not the driver's RPC).
+- **Pattern** (same as the driver screen): `src/lib/api/coop.ts` → `src/hooks/use-my-terminals.ts`, `use-terminal-routes.ts`, `use-my-vehicles.ts` → `src/app/coop/`. Shared pieces: `src/components/coop/pin-picker.tsx` (reusable map pin picker) and `vehicle-type-chips.tsx`.
+- **Not tested on a phone or against the live database yet.** `npx tsc --noEmit` shows only the error below; lint is clean.
+
+### JM
+- **Promote my test accounts:** one coop and one driver with the same `coop_id` (I'll send the emails). I need them to test.
+- **`_layout.tsx`:** I added five lines inside the logged-in `Stack.Protected`: `coop/terminal`, `coop/routes`, `coop/route`, `coop/vehicles`, `coop/vehicle`. Nothing else in the file changed.
+- **tsc error on a fresh install:** `src/app/_layout.tsx(1,8)` TS2882 "Cannot find module '../global.css'" (TypeScript 6 checks side-effect imports). Probable fix: `declare module "*.css";` in `nativewind-env.d.ts`.
+- **RLS gap on `vehicles`:** insert and update check that `route_id` is ours but **not `driver_id`**, so a crafted request could assign another coop's driver. Suggest adding this to both `with check` clauses in migration 2: `and (driver_id is null or exists (select 1 from public.profiles p where p.id = driver_id and p.role = 'driver' and p.coop_id = (select public.my_coop_id())))`.
+- **Fare question:** my answer on A or B and on bus operator sign-up is coming separately.
+
+### Matt
+- Routes and fares a coop edits are the same `routes` rows your commuter screen reads, so a change shows on your next load.
+- If you need a map pin picker for "drop a pin" on the commuter side, `PinPicker` takes `{ pin, onPick }`.
+
+### Next (Rj)
+- Phone test of all three screens with the promoted accounts.
+- Seed SQL (coops, terminals, routes, vehicles), once the fare question is settled and I have real Naga terminal data.
+
+---
+
 ## Oct 27 (later), JM → Matt and Rj: driver screen works
 
 - The driver home shows the driver's vehicle, route and official fare guide, with **Now loading / Departed / Off duty** buttons and a fare field ("Above the official fare" when higher). Tested on JM's phone with throwaway TEST rows, since deleted.
