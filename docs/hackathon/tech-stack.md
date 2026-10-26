@@ -82,7 +82,7 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 - After boarding or a fare lookup the app shows "Pay ₱__" next to that QR. The commuter pays in their own wallet app.
 - **No payment confirmation** in the MVP: the driver checks their wallet notification. Cash is always fine.
 
-### Push notifications (Satisfier, after H10)
+### Push notifications (Satisfier, **cut Oct 28**, pitched as next steps; kept here for the record)
 - A status change triggers `send-push` through pg_net, with the shared secret kept in Vault.
 - Needs the dev build (push does not work in Expo Go on Android since SDK 53) and FCM credentials from Firebase.
 
