@@ -35,7 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="commuter" options={{ headerShown: false }} />
         <Stack.Screen name="waiting" options={{ title: "Waiting for your coop" }} />
-        <Stack.Screen name="driver/index" />
+        <Stack.Screen name="driver" options={{ headerShown: false }} />
         <Stack.Screen name="coop/index" />
         <Stack.Screen name="coop/terminal" />
         <Stack.Screen name="coop/routes" />
