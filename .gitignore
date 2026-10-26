@@ -8,7 +8,7 @@
 CLAUDE.local.md
 .court/
 
-# Raw Directions API responses, stitched into data/routes/*.geojson
+# Raw Directions API responses, stitched into data/routes/*.json (GeoJSON; .json so Metro can import them)
 data/routes/raw/
 
 # Expo (from the SDK 56 template)
