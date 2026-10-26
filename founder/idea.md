@@ -1,4 +1,4 @@
-# Idea (locked by the team, revised): Naga commute app (working name TransCo, rebrand pending)
+# Idea (locked by the team, revised): Naga commute app (named Larga on Oct 26; was TransCo)
 
 **One line:** a commute app for Naga City, Bicol, that shows commuters which jeepney or tricycle to take, where to wait and get off, the fare, and where the jeepney is now, with cashless payment handled by third-party QR services.
 

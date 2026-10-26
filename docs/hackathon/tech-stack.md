@@ -1,6 +1,6 @@
 # Tech Stack (decided) [AI: FOLLOW]
 
-Stack for the terminal commute app (working name TransCo, rebrand pending), decided 2026-10-26. Built on the terminal pivot in `terminal-pivot.md`. The Decisions Log in `prep-plan.md` records each choice and wins if anything here goes stale. Researched with Context7 (Expo, rnmapbox, Supabase, RevenueCat, Laravel, Railway, Render docs).
+Stack for Larga, the terminal commute app, decided 2026-10-26. Built on the terminal pivot in `terminal-pivot.md`. The Decisions Log in `prep-plan.md` records each choice and wins if anything here goes stale. Researched with Context7 (Expo, rnmapbox, Supabase, RevenueCat, Laravel, Railway, Render docs).
 
 This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowledge from the team's other Expo + Supabase app, not its code.
 
