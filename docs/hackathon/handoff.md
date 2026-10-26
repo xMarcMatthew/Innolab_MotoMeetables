@@ -19,14 +19,31 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (late night), JM → everyone: where things stand, what is next
+
+**State:** the snapshot is the "Current hour / phase" row in `prep-plan.md`. Live database: migrations 1 to 6 plus the Naga seed; checks 53/53, 12/12, 25/25 OK. Every pushed migration was first run in a rolled-back pre-push test (migration + its check file in one `begin ... rollback`).
+
+**JM next, in order:**
+1. **Boarding** (planned, not started): migration 7 `board_vehicle(token, lat, lng)` (commuters only; vehicle position fresh under 30 s and within 100 m; no second boarding of the same vehicle within 10 min; inserts the trip; a board token for every existing and new vehicle; `vehicle_tokens` readable only by that vehicle's driver). Then a driver **QR** tab (board QR full screen, passengers today). Open question for Matt: who wires **Scan to board** into the slot in `route.tsx` (JM can, as with the live markers).
+2. Promote Rj's coop and driver test accounts (waiting on the emails), coop redirect test.
+3. Firebase (`google-services.json`) and one rebuild for push; then a **standalone demo APK** (a dev build only runs while a laptop serves the code).
+4. Before the H16 freeze: long GPS battery test, the two small fixes from the live GPS review (End trip offline label; the GPS task stops itself when the vehicle is unassigned), `/ponytail-audit`, the UI/UX pass (designer's look + Pro Max checklist).
+
+**Matt:** phone-test your commuter flow (search Pacol, ride options, route, live jeep markers). **Mentor's idea, saved trips**, is in the Decisions Log as proposed: recent and pinned destinations on the phone first, no database change.
+
+**Rj:** install the dev build (JM invited you to the Expo org), send JM your test account emails, phone-test the coop screens.
+
+---
+
 ## Oct 27 (night), JM → Matt and Rj: live GPS from the driver phone works (migration 5)
 
 - **Workers' code is merged and reviewed** (Matt's push `0a4beec`): tsc and lint clean, `/for-drivers` fix and no "Coming soon" confirmed. After pulling, run `npm install` and start Metro once (`npm start`): Metro regenerates the typed routes, otherwise `npx tsc` reports `/waiting`, `/for-drivers` and `/commuter/options` as unknown.
 - **Migration 5 is live:** `update_my_location(lat, lng)` saves the driver's own vehicle position (one row per vehicle in `vehicle_positions`). Checks: RLS behaviour 44/44, search 12/12, 24/24 OK.
 - **Driver screen:** Worker B's `FirstTripChecklist` is wired in; **Start trip** shares the phone's location about every 5 s with a pinned notification, also with the screen locked or the app swiped away (tested on JM's phone); **End trip** stops it and sets Off duty; **Sign out** ends a running trip first.
 - **Driver tabs:** Trip (the driver screen) and Account (name, email, coop, Sign out), same pattern as the commuter tabs; QR joins with boarding. `signOut` is exported from `src/components/sign-out-button.tsx` and ends a running trip first. Matt: `commuter/account.tsx` could call it too (harmless as is, commuters never run trips).
-- **Matt:** live positions are in `vehicle_positions` (`vehicle_id`, `lat`, `lng`, `updated_at`), already in the Realtime publication. JM's next units: driver tabs, then a `useVehiclePositions(routeIds)` hook (Realtime, hides a vehicle after 15 s) for your Route screen's marker comment.
-- **Test account:** `markphilips@example.com` is a driver of the sample jeepney coop on `SMP-1001` (for testing; JM undoes it later).
+- **Matt, live jeeps on your Route map:** I put 2 lines in the slot you left in `src/app/commuter/(home)/route.tsx` (an import and `<LiveVehicles routeIds={[routeId]} />`), so it could be tested tonight. The hook is `src/hooks/use-vehicle-positions.ts` (Realtime, hides a jeep silent for 15 s); the marker is `src/components/live-vehicles.tsx`, a cyan dot with "SMP-1001 · Now loading", a placeholder until the designer sends a vehicle icon (colors and size at the top of that file). Tested on JM's phone with the SQL Editor playing the driver. Move or restyle it as you like.
+- **Test account:** `markphilips@example.com` is a commuter again and `SMP-1001` has no driver.
+- **Rj, migration 6 is pushed** (payment QR): pre-push and live checks 53/53, 25/25 OK; your coop Vehicles screen can read `payment_qr_by_driver` now. Merge note: your "Oct 27, scope" row and JM's "Oct 27, live map" row both stay in the Decisions Log. **For your coop QR entry later:** when a coop saves a vehicle's `payment_qr`, also set `payment_qr_by_driver = false`, or the list keeps saying "set by driver".
 
 ---
 

@@ -77,8 +77,8 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 - The commuter's location is used for that check only and never stored.
 
 ### Payment (third party, we never hold money)
-- Each vehicle has one `payment_qr` text field, filled with the **coop's QR Ph code by default** (the coop may use the driver's own instead).
-- The coop scans its printed QR once with the in-app scanner; we store the QR text and redraw it with react-native-qrcode-svg. No image uploads.
+- Each vehicle has one `payment_qr` text field. Since migration 6 (Rj, Oct 27) **the driver is the payment contact**: the driver scans their own GCash or Maya QR Ph code on the Trip tab and saves it with `set_my_payment_qr` (format checked in the database, CRC in `src/lib/qrph.ts`); `payment_qr_by_driver` tells the coop who set it. A coop-entered QR is optional, later.
+- We store the QR text and redraw it with react-native-qrcode-svg. No image uploads.
 - After boarding or a fare lookup the app shows "Pay ₱__" next to that QR. The commuter pays in their own wallet app.
 - **No payment confirmation** in the MVP: the driver checks their wallet notification. Cash is always fine.
 
@@ -98,12 +98,12 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 | `coops` | name, type (jeepney coop, TODA, bus) | public read |
 | `terminals` | coop, name, `lat`, `lng` | public read; coop writes own |
 | `routes` | terminal, destination name, `destination_lat`, `destination_lng`, vehicle type, route line (GeoJSON), official regular fare, official discounted fare | public read; coop writes own |
-| `vehicles` | coop, plate, vehicle type, route, driver, status, driver's fare, `payment_qr` | public read; coop writes own, and can assign only drivers of its own coop; status and fare changes by the driver via RPC |
+| `vehicles` | coop, plate, vehicle type, route, driver, status, driver's fare, `payment_qr`, `payment_qr_by_driver` | public read; coop writes own, and can assign only drivers of its own coop; status, fare and payment QR changes by the driver via RPC |
 | `vehicle_tokens` | vehicle, `board_token` | its own table because RLS hides rows, not columns; only that vehicle's driver reads it; `board_vehicle` reads it |
 | `vehicle_positions` | vehicle (one row each), `lat`, `lng`, updated_at | public read; writes only through `update_my_location` |
 | `boardings` | commuter, vehicle (kept as empty if the vehicle is deleted, so trip history survives), boarded_at | commuter reads own; driver reads count for own vehicle; insert only through `board_vehicle` |
 
-Locations are plain `lat`/`lng` numbers (with range checks), not PostGIS columns: the API and Realtime return PostGIS columns as hex the app cannot plot. PostGIS is used only inside functions that measure distance. "Logged-in users" means any signed-in account; logged-out users can read nothing. Migration 1 (`supabase/migrations/20261026150545_init_schema.sql`) creates all tables above plus `set_vehicle_status` and `set_my_fare`; Migration 2 (`20261026175237_nearest_routes.sql`) adds `nearest_routes` and a rule that `routes.route_line` is a GeoJSON LineString with at least 2 points; Migration 3 (`20261026180527_add_modern_jeepney.sql`) adds the vehicle type `modern_jeepney` (`jeepney` means the traditional jeep) and limits a coop to assigning its own coop's drivers; Migration 4 (`20261026183317_skip_routes_starting_at_pin.sql`) makes `nearest_routes` skip routes whose terminal is within 300 m of the pin; Migration 5 (`20261026190522_update_my_location.sql`) adds `update_my_location`; `push_tokens` and `board_vehicle` come in later migrations. Checks for migration 2: `supabase/checks/nearest_routes.sql`. When `board_vehicle` lands, add `role = 'driver'` to the `vehicle_tokens` read rule (security review note).
+Locations are plain `lat`/`lng` numbers (with range checks), not PostGIS columns: the API and Realtime return PostGIS columns as hex the app cannot plot. PostGIS is used only inside functions that measure distance. "Logged-in users" means any signed-in account; logged-out users can read nothing. Migration 1 (`supabase/migrations/20261026150545_init_schema.sql`) creates all tables above plus `set_vehicle_status` and `set_my_fare`; Migration 2 (`20261026175237_nearest_routes.sql`) adds `nearest_routes` and a rule that `routes.route_line` is a GeoJSON LineString with at least 2 points; Migration 3 (`20261026180527_add_modern_jeepney.sql`) adds the vehicle type `modern_jeepney` (`jeepney` means the traditional jeep) and limits a coop to assigning its own coop's drivers; Migration 4 (`20261026183317_skip_routes_starting_at_pin.sql`) makes `nearest_routes` skip routes whose terminal is within 300 m of the pin; Migration 5 (`20261026190522_update_my_location.sql`) adds `update_my_location`; Migration 6 (`20261026194526_driver_payment_qr.sql`, Rj) adds `set_my_payment_qr` and `vehicles.payment_qr_by_driver`; `push_tokens` and `board_vehicle` come in later migrations. Checks for migration 2: `supabase/checks/nearest_routes.sql`. When `board_vehicle` lands, add `role = 'driver'` to the `vehicle_tokens` read rule (security review note).
 | `push_tokens` (after H10) | user, Expo push token | user reads and writes own |
 
 ## Security model (non-negotiable)
@@ -157,7 +157,7 @@ App code lives under `src/` (the SDK 56 template's layout); import it as `@/...`
 
 ## Before building, check
 
-1. The first **EAS dev build** works and installs on all three phones. Done on JM's phone Oct 27; Matt and Rj install it via `handoff.md`.
+1. The first **EAS dev build** works and installs on all three phones. Done on JM's and Matt's phones Oct 27; Rj installs it via `handoff.md` ("Get set up").
 2. ~~Mapbox account and public token.~~ Done: the public token works, and no extra download token is needed (rnmapbox docs; the build compiled without one). Matt's style URL is still pending.
 3. ~~Supabase project in Singapore, PostGIS enabled, email confirmation off, CLI linked on the integrator's laptop.~~ Done Oct 26: migration 1 pushed; live checks 22/22 OK and 31/31 PASS.
 4. Background location on a real Android phone with the screen off, early.
