@@ -2,7 +2,7 @@ import Mapbox, { Camera, CircleLayer, LineLayer, MapView, ShapeSource } from "@r
 import type { FeatureCollection, Position } from "geojson";
 import { View } from "react-native";
 
-import pacolCentro from "../../../data/routes/pacol-centro.json";
+import pacolCentro from "../../../../data/routes/pacol-centro.json";
 import { SignOutButton } from "@/components/sign-out-button";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);

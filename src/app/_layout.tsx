@@ -31,7 +31,8 @@ export default function RootLayout() {
     <Stack>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="commuter/index" />
+        <Stack.Screen name="commuter" options={{ headerShown: false }} />
+        <Stack.Screen name="waiting" options={{ title: "Waiting for your coop" }} />
         <Stack.Screen name="driver/index" />
         <Stack.Screen name="coop/index" />
         <Stack.Screen name="coop/terminal" />
@@ -41,6 +42,9 @@ export default function RootLayout() {
         <Stack.Screen name="coop/vehicle" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
+        {/* Welcome is first so logged-out users land on it, not on Sign in. */}
+        <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/driver" options={{ title: "Driving for a coop" }} />
         <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
         <Stack.Screen name="(auth)/sign-up" options={{ title: "Create account" }} />
       </Stack.Protected>
