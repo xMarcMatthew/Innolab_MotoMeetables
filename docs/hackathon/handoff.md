@@ -15,6 +15,7 @@ Notes between the three of us while we build in parallel. **Newest section on to
   3. Scan again: "You already boarded this vehicle". Scan any other QR: "This is not a Larga boarding code".
   4. Clean up: delete today's `boardings` for SMP-1001.
 - **Known limit:** the GPS fix has no timeout, so indoors "Checking you are at the vehicle" can spin. Test outside or at a window.
+- **Two live GPS review fixes, also not phone-tested** (one phone is enough): End trip while offline now stops sharing, shows "Location sharing stopped, but Off duty was not saved" and goes back to Start trip; and the GPS task stops itself within about 5 s if the coop unassigns the vehicle mid-trip (before, it failed every 5 s until End trip). Test: Start trip, airplane mode, End trip; then Start trip and set `driver_id = null` on SMP-1001 in the SQL Editor, and the pinned notification should disappear.
 
 ---
 

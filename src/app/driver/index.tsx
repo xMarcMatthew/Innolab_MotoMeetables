@@ -87,8 +87,12 @@ export default function DriverHome() {
   const onEndTrip = async () => {
     setTripAction("ending");
     await run(async () => {
-      await endTrip();
-      setOnTrip(false);
+      // Offline, the GPS still stops but Off duty fails: show what is really running either way.
+      try {
+        await endTrip();
+      } finally {
+        setOnTrip(await isOnTrip());
+      }
     });
     setTripAction(null);
   };

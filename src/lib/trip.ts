@@ -17,7 +17,15 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
       p_lat: fix.coords.latitude,
       p_lng: fix.coords.longitude,
     });
-    if (rpcError) console.warn("update_my_location failed:", rpcError.message);
+    if (!rpcError) return;
+    // 42501: the coop unassigned this vehicle (or the session is gone), so every later fix would fail too.
+    if (rpcError.code === "42501") {
+      if (await Location.hasStartedLocationUpdatesAsync(TRIP_TASK)) {
+        await Location.stopLocationUpdatesAsync(TRIP_TASK);
+      }
+      return;
+    }
+    console.warn("update_my_location failed:", rpcError.message);
   },
 );
 
@@ -44,7 +52,9 @@ export async function endTrip() {
   if (await Location.hasStartedLocationUpdatesAsync(TRIP_TASK)) {
     await Location.stopLocationUpdatesAsync(TRIP_TASK);
   }
-  await setStatus("off_duty");
+  await setStatus("off_duty").catch((e: Error) => {
+    throw new Error(`Location sharing stopped, but Off duty was not saved: ${e.message}`);
+  });
 }
 
 export const isOnTrip = () => Location.hasStartedLocationUpdatesAsync(TRIP_TASK);
