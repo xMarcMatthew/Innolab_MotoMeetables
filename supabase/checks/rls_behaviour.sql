@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "36 of 36 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "44 of 44 PASS" and "no failures".
 
 begin;
 
@@ -84,6 +84,8 @@ select pg_temp.expect('logged out: cannot read vehicles', 'err:42501',
   pg_temp.try_val(null, 'select count(*) from public.vehicles'));
 select pg_temp.expect('logged out: cannot run set_vehicle_status', 'err:42501',
   pg_temp.try_exec(null, $q$select public.set_vehicle_status('loading')$q$));
+select pg_temp.expect('logged out: cannot save a location', 'err:42501',
+  pg_temp.try_exec(null, $q$select public.update_my_location(13.62, 123.18)$q$));
 
 -- Sign-up and profiles (A is a commuter)
 select pg_temp.expect('sign-up ignores a role in sign-up data', 'commuter',
@@ -155,11 +157,27 @@ select pg_temp.expect('driver reads their own board token', '1',
 select pg_temp.expect('driver with no vehicle cannot set a status', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000e', $q$select public.set_vehicle_status('loading')$q$));
 
+-- Driver D's live location (migration 5)
+select pg_temp.expect('driver saves their location', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.update_my_location(13.62, 123.18)$q$));
+select pg_temp.expect('a second fix moves the same row', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.update_my_location(13.63, 123.19)$q$));
+select pg_temp.expect('the vehicle has one position, the latest', '1 13.63',
+  (select count(*) || ' ' || max(lat) from public.vehicle_positions where vehicle_id = '00000000-0000-0000-0000-0000000000b1'));
+select pg_temp.expect('driver cannot save a location outside the map', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.update_my_location(123.18, 13.62)$q$));
+select pg_temp.expect('commuter cannot save a location', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.update_my_location(13.62, 123.18)$q$));
+select pg_temp.expect('driver with no vehicle cannot save a location', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000e', $q$select public.update_my_location(13.62, 123.18)$q$));
+
 -- A coop wrongly assigns commuter A as a driver: the driver functions still refuse them.
 update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a'
 where id = '00000000-0000-0000-0000-0000000000b2';
 select pg_temp.expect('commuter assigned as driver still cannot set status', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_vehicle_status('loading')$q$));
+select pg_temp.expect('commuter assigned as driver still cannot save a location', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.update_my_location(13.62, 123.18)$q$));
 
 -- Report by raising an error: the SQL Editor and CLI show only the last statement's output, and an
 -- error is the one ending that always rolls the test data back, wherever this file is run.

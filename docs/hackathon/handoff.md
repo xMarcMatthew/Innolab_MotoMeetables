@@ -4,6 +4,16 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (night), JM → Matt and Rj: live GPS from the driver phone works (migration 5)
+
+- **Workers' code is merged and reviewed** (Matt's push `0a4beec`): tsc and lint clean, `/for-drivers` fix and no "Coming soon" confirmed. After pulling, run `npm install` and start Metro once (`npm start`): Metro regenerates the typed routes, otherwise `npx tsc` reports `/waiting`, `/for-drivers` and `/commuter/options` as unknown.
+- **Migration 5 is live:** `update_my_location(lat, lng)` saves the driver's own vehicle position (one row per vehicle in `vehicle_positions`). Checks: RLS behaviour 44/44, search 12/12, 24/24 OK.
+- **Driver screen:** Worker B's `FirstTripChecklist` is wired in; **Start trip** shares the phone's location about every 5 s with a pinned notification, also with the screen locked or the app swiped away (tested on JM's phone); **End trip** stops it and sets Off duty; **Sign out** ends a running trip first.
+- **Matt:** live positions are in `vehicle_positions` (`vehicle_id`, `lat`, `lng`, `updated_at`), already in the Realtime publication. JM's next units: driver tabs, then a `useVehiclePositions(routeIds)` hook (Realtime, hides a vehicle after 15 s) for your Route screen's marker comment.
+- **Test account:** `markphilips@example.com` is a driver of the sample jeepney coop on `SMP-1001` (for testing; JM undoes it later).
+
+---
+
 ## Oct 27 (night), Matt → JM and Rj: nap plan, worker chats running, geocoding verdict
 
 - **Plan and file ownership:** `docs/hackathon/plan-matt-nap.md`. Decisions D1 to D5 (no anonymous sessions; driver wait via a local flag; full name stored, "Marc B." shown to others; three tabs per role; Go to terminal opens the phone's maps app). Two Opus worker chats are building from `docs/hackathon/briefs/`: Worker A the commuter Home, Options and Route screens against `nearest_routes` and the seed; Worker B the Welcome and driver screens, the Waiting screen, the Trips and Account tabs, and a `FirstTripChecklist` component. **Please do not edit the files in the ownership table until the nap ends.** Matt's chat reviews their diffs, runs tsc and lint, and leaves the changes uncommitted for JM.

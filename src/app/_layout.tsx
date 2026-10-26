@@ -6,6 +6,8 @@ import { cssInterop } from "nativewind";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
+// Defines the driver's background GPS task at startup, as Android requires.
+import "@/lib/trip";
 
 // NativeWind only styles core components on native; without this, className on Link works on web but not on the phone.
 cssInterop(Link, { className: "style" });

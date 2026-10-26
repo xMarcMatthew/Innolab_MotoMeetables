@@ -1,14 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
 
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
+import { FirstTripChecklist } from "@/components/driver/first-trip-checklist";
 import { FormField } from "@/components/form-field";
 import { SignOutButton } from "@/components/sign-out-button";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
 import { setFare, setStatus, type VehicleStatus } from "@/lib/api/driver";
+import { endTrip, isOnTrip, startTrip, type StartTripResult } from "@/lib/trip";
 import { type Fare, fareSchema } from "@/lib/validation";
+
+type TripDenied = Exclude<StartTripResult, "started">;
+const TRIP_DENIED: Record<TripDenied, string> = {
+  "location-denied": "Larga needs your location to share where your vehicle is.",
+  "background-denied":
+    'Set Location to "Allow all the time" so sharing keeps going with the screen off.',
+};
 
 // Status is always spelled out, never color alone. Orange accent only on "Now loading" (Palette A).
 const STATUSES: { status: VehicleStatus; label: string; button: string; text: string }[] = [
@@ -28,6 +37,9 @@ export default function DriverHome() {
   const { vehicle, loading, error, reload } = useMyVehicle();
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  // null until we know whether a trip is already running (it survives an app restart).
+  const [onTrip, setOnTrip] = useState<boolean | null>(null);
+  const [tripDenied, setTripDenied] = useState<TripDenied | null>(null);
   const { control, handleSubmit } = useForm<Fare>({
     resolver: zodResolver(fareSchema),
     values: { fare: vehicle?.driver_fare?.toFixed(2) ?? "" },
@@ -49,6 +61,23 @@ export default function DriverHome() {
 
   const onSaveFare = handleSubmit(({ fare }) => run(() => setFare(Number(fare))));
 
+  useEffect(() => {
+    isOnTrip().then(setOnTrip, () => setOnTrip(false));
+  }, []);
+
+  const onStartTrip = () =>
+    run(async () => {
+      const result = await startTrip();
+      setTripDenied(result === "started" ? null : result);
+      setOnTrip(result === "started");
+    });
+
+  const onEndTrip = () =>
+    run(async () => {
+      await endTrip();
+      setOnTrip(false);
+    });
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
@@ -60,6 +89,7 @@ export default function DriverHome() {
   if (error || !vehicle) {
     return (
       <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
+        {!error && <FirstTripChecklist vehicleAssigned={false} />}
         <Text className={`text-center ${error ? "text-destructive" : "text-foreground"}`}>
           {error ?? "No vehicle assigned yet. Ask your coop."}
         </Text>
@@ -84,6 +114,7 @@ export default function DriverHome() {
       contentContainerClassName="gap-6 p-6"
       keyboardShouldPersistTaps="handled"
     >
+      <FirstTripChecklist vehicleAssigned />
       <View className="gap-1">
         <Text className="text-2xl font-bold text-foreground">
           {vehicle.plate} · {VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}
@@ -94,6 +125,43 @@ export default function DriverHome() {
             : "No route set by your coop"}
         </Text>
       </View>
+
+      {onTrip !== null && (
+        <View className="gap-2">
+          {onTrip ? (
+            <>
+              <Text className="font-semibold text-foreground">
+                On a trip: sharing your location
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={onEndTrip}
+                className="items-center rounded-lg border border-muted bg-white py-3"
+              >
+                <Text className="font-semibold text-foreground">End trip</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={onStartTrip}
+              className="items-center rounded-lg bg-accent py-3"
+            >
+              <Text className="font-semibold text-white">Start trip</Text>
+            </Pressable>
+          )}
+          {tripDenied && (
+            <>
+              <Text className="text-destructive">{TRIP_DENIED[tripDenied]}</Text>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openSettings()}>
+                <Text className="font-semibold text-primary">Open settings</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      )}
 
       <View className="gap-3">
         <Text className="text-lg font-semibold text-foreground">Status: {current?.label}</Text>
