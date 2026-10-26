@@ -7,6 +7,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } 
 import { FareLines, StatusLine } from "@/components/commuter/ride-lines";
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { LiveVehicles } from "@/components/live-vehicles";
+import { ScanToBoard } from "@/components/scan-to-board";
 import { useRouteDetail } from "@/hooks/use-route-detail";
 import { colors } from "@/lib/colors";
 
@@ -153,7 +154,8 @@ export default function RouteScreen() {
         >
           <Text className="font-semibold text-white">Go to terminal</Text>
         </Pressable>
-        {/* After H10: Scan to board (board_vehicle) and Pay (the vehicle's payment_qr) go here. */}
+        <ScanToBoard />
+        {/* After H10: Pay (the vehicle's payment_qr) goes here. */}
       </ScrollView>
     </View>
   );

@@ -4,6 +4,20 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 28, JM → Matt and Rj: Scan to board is in, needs a two-phone test
+
+- **Matt, I used your slot** in `src/app/commuter/(home)/route.tsx`: an import and `<ScanToBoard />` under "Go to terminal", same as the live markers. Your comment there now marks the slot for **Pay** only. The component lives outside your folders (`src/components/scan-to-board.tsx`, call in `src/lib/api/boarding.ts`), so your UI/UX edits to `route.tsx` will not collide. Move or restyle it as you like.
+- **What it does:** an orange **Scan to board** button opens the camera (asks for location and camera the first time), reads the QR on the driver's QR tab, and shows **"Boarded SMP-1001"** or the server's message in red with Try again. It takes its own fresh, high-accuracy GPS fix, because `getMyLocation` accepts one up to 5 minutes old and the check is 100 m.
+- **Driver QR tab** now uses Rj's `LoadingState`, `ErrorState` and `EmptyState`.
+- **Not phone-tested yet** (needs two phones). Whoever is awake with JM:
+  1. JM's account on SMP-1001 as driver (SQL in the scratchpad routine), **Start trip**, open the **QR** tab: "Passengers today: 0".
+  2. Second phone, any commuter account: search Pacol, open a ride option, **Scan to board**, scan JM's QR from about 1 m. Expect "Boarded SMP-1001" and the driver's count at 1 within about 5 s.
+  3. Scan again: "You already boarded this vehicle". Scan any other QR: "This is not a Larga boarding code".
+  4. Clean up: delete today's `boardings` for SMP-1001.
+- **Known limit:** the GPS fix has no timeout, so indoors "Checking you are at the vehicle" can spin. Test outside or at a window.
+
+---
+
 ## Oct 28 (4 am), Rj → Matt: UI/UX pass on the shared pieces, and your screens' findings
 
 - **What is happening:** a UI/UX audit (ui-ux-pro-max checklist) found 10 issues. Rj's worker chat is adding shared components in `src/components/ui/` (`Button`, `Card`, `Badge`, `EmptyState`, `LoadingState`/`ErrorState`) and restyling the driver, auth and coop screens. Palette A is unchanged and **nobody touches your files** (`commuter/*`, `components/commuter/*`) while you nap.

@@ -1,8 +1,11 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { getMyBoardQr, getPassengersToday } from "@/lib/api/driver";
 
 // How often the passenger count refreshes while this tab is open. Drivers cannot read boardings, so no Realtime.
@@ -41,39 +44,30 @@ export default function DriverQr() {
     }, [loadQr]),
   );
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   // A failed reload keeps the QR already on screen; the error shows only when nothing loaded yet.
   if (error && !board) {
     return (
-      <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
-        <Text className="text-center text-destructive">Could not load your QR: {error}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
+      <View className="flex-1 justify-center bg-background p-6">
+        <ErrorState
+          message={`Could not load your QR: ${error}`}
+          onRetry={() => {
             setLoading(true);
             loadQr();
           }}
-          className="min-h-12 justify-center px-4 active:opacity-80"
-        >
-          <Text className="font-semibold text-primary">Retry</Text>
-        </Pressable>
+        />
       </View>
     );
   }
 
   if (!board) {
     return (
-      <View className="flex-1 items-center justify-center bg-background p-6">
-        <Text className="text-center text-muted">
-          No vehicle assigned yet. Ask your coop to assign you one.
-        </Text>
+      <View className="flex-1 justify-center bg-background">
+        <EmptyState
+          icon="qrcode-remove"
+          message="No vehicle assigned yet. Ask your coop to assign you one."
+        />
       </View>
     );
   }
