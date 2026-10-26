@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "44 of 44 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "53 of 53 PASS" and "no failures".
 
 begin;
 
@@ -171,6 +171,24 @@ select pg_temp.expect('commuter cannot save a location', 'err:42501',
 select pg_temp.expect('driver with no vehicle cannot save a location', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000e', $q$select public.update_my_location(13.62, 123.18)$q$));
 
+-- Driver D's payment QR (migration 6). The sample is the payload "000201" + "6304" + 4 hex characters: the DB checks the format only.
+select pg_temp.expect('driver sets a valid payment QR', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.set_my_payment_qr('00020126360014ph.ppmi.p2p6304ABCD')$q$));
+select pg_temp.expect('payment QR is stored and marked as set by the driver', '00020126360014ph.ppmi.p2p6304ABCD true',
+  (select payment_qr || ' ' || payment_qr_by_driver from public.vehicles where id = '00000000-0000-0000-0000-0000000000b1'));
+select pg_temp.expect('driver cannot set a QR that is not QR Ph', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.set_my_payment_qr('https://example.com')$q$));
+select pg_temp.expect('driver cannot set a too-long QR', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.set_my_payment_qr('000201' || repeat('0', 1000) || '6304ABCD')$q$));
+select pg_temp.expect('driver cannot edit payment_qr on the vehicle row directly', 'rows=0',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$update public.vehicles set payment_qr = 'x' where id = '00000000-0000-0000-0000-0000000000b1'$q$));
+select pg_temp.expect('driver with no vehicle cannot set a payment QR', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000e', $q$select public.set_my_payment_qr('00020126360014ph.ppmi.p2p6304ABCD')$q$));
+select pg_temp.expect('driver removes the payment QR', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.set_my_payment_qr(null)$q$));
+select pg_temp.expect('a removed payment QR is empty and not marked', ' false',
+  (select coalesce(payment_qr, '') || ' ' || payment_qr_by_driver from public.vehicles where id = '00000000-0000-0000-0000-0000000000b1'));
+
 -- A coop wrongly assigns commuter A as a driver: the driver functions still refuse them.
 update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a'
 where id = '00000000-0000-0000-0000-0000000000b2';
@@ -178,6 +196,8 @@ select pg_temp.expect('commuter assigned as driver still cannot set status', 'er
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_vehicle_status('loading')$q$));
 select pg_temp.expect('commuter assigned as driver still cannot save a location', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.update_my_location(13.62, 123.18)$q$));
+select pg_temp.expect('commuter assigned as driver still cannot set a payment QR', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_my_payment_qr('00020126360014ph.ppmi.p2p6304ABCD')$q$));
 
 -- Report by raising an error: the SQL Editor and CLI show only the last statement's output, and an
 -- error is the one ending that always rolls the test data back, wherever this file is run.
