@@ -93,6 +93,10 @@ export default function Vehicles() {
               {v.driver_id ? (v.driver?.full_name ?? "Unnamed driver") : "No driver"}
             </Text>
             <Text className="font-medium text-foreground">Status: {STATUS_LABELS[v.status]}</Text>
+            <Text className="text-muted">
+              Payment QR:{" "}
+              {v.payment_qr ? (v.payment_qr_by_driver ? "set by driver" : "set by coop") : "none"}
+            </Text>
           </Pressable>
           <Chips
             options={STATUS_OPTIONS}

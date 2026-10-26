@@ -9,6 +9,7 @@ export type MyVehicle = {
   vehicle_type: VehicleType;
   status: VehicleStatus;
   driver_fare: number | null;
+  payment_qr: string | null;
   route: {
     destination_name: string;
     guide_fare_regular: number;
@@ -24,7 +25,7 @@ export async function getMyVehicle(): Promise<MyVehicle | null> {
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, plate, vehicle_type, status, driver_fare, route:routes(destination_name, guide_fare_regular, guide_fare_discounted, terminal:terminals(name))",
+      "id, plate, vehicle_type, status, driver_fare, payment_qr, route:routes(destination_name, guide_fare_regular, guide_fare_discounted, terminal:terminals(name))",
     )
     .eq("driver_id", auth.session.user.id)
     .maybeSingle();
@@ -32,7 +33,7 @@ export async function getMyVehicle(): Promise<MyVehicle | null> {
   return data as MyVehicle | null;
 }
 
-// Both RPCs find the vehicle from auth.uid() and validate the value themselves.
+// All three RPCs find the vehicle from auth.uid() and validate the value themselves.
 export async function setStatus(status: VehicleStatus) {
   const { error } = await supabase.rpc("set_vehicle_status", { p_status: status });
   if (error) throw new Error(error.message);
@@ -40,5 +41,11 @@ export async function setStatus(status: VehicleStatus) {
 
 export async function setFare(fare: number) {
   const { error } = await supabase.rpc("set_my_fare", { p_fare: fare });
+  if (error) throw new Error(error.message);
+}
+
+// null removes the QR. The database checks the format; the app checks the CRC (isValidQrPh) before calling.
+export async function setMyPaymentQr(qr: string | null) {
+  const { error } = await supabase.rpc("set_my_payment_qr", { p_qr: qr });
   if (error) throw new Error(error.message);
 }
