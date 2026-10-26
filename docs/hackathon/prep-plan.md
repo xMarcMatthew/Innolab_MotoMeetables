@@ -45,7 +45,7 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 | **Must-have features** | Route data for Naga, route and fare lookup, commuter and driver accounts. (Scope proposal in founder/feasibility.md; payment and live tracking go through third-party services.) |
 | **Web or mobile** | Web (default), PWA as a Satisfier |
 | **Backend** | Laravel or Flask (decide and log it in the Decisions Log) |
-| **Current hour / phase** |  |
+| **Current hour / phase** | Planning. Terminal pivot proposed (Decisions Log, last row); confirm it, then rewrite feasibility.md, tech-stack.md and payment-flow.md to match before scaffolding. |
 
 ## 1. How We Work [AI: REFERENCE]
 
@@ -289,3 +289,7 @@ Newest information wins. Add a row for every decision.
 | Oct 26, planning | Live updates by polling (driver posts location every 5 to 10 s, commuter map re-fetches every 5 s). | Plain Laravel routes, nothing extra to deploy. |
 | Oct 26, planning | Map provider: Mapbox (react-map-gl). | Map, route lines, live markers, Map Matching for recorded routes. |
 | Oct 26, planning | Work split by feature; the team assigns owners. | Team decision. |
+| Oct 26, payment review | Real wallet-style payment (we hold balances) is pitched as the incubation vision only. Not built, no license needed for the demo. | Needs an e-money license; incubation problem, not a hackathon one. |
+| Oct 26, payment review | Two-scan flow (Option A in payment-flow.md) with its 5 fixes was agreed, then **superseded by the terminal pivot below**. Driver location every 5 s with a 15 s staleness cutoff was the tuning agreed for it. | Kept for the record; only matters if hail-anywhere jeeps come back into scope. |
+| Oct 26, payment review | Demo as an Android APK (React Native + Expo on the same Laravel backend, per the Mobile Backup Plan), not a web app. Team has test devices ready. | Team decision. Background location was the trigger; with tracking dropped (below), reconfirm the APK is still worth the toolchain time. |
+| Oct 26, scope pivot (**proposed, confirm next session**) | Narrow to **terminals**: jeepney, bus and tricycle terminals with fixed fare matrices and known start and end points. Core flow: pick terminal and destination, see vehicle and fare, pay through the coop or TODA QR, get a ticket QR, driver scans it once. Hail-anywhere jeeps without conductors are out of scope. Live GPS tracking replaced by dispatcher "now loading / departed". | Fixed fares remove fare computation, GPS pickup and spoofing problems. Data is a fare matrix per terminal, not traced routes. Partner is a TODA or terminal coop. Open points: confirm matrices are per destination, buses as info only (bus lines already sell tickets online), coop QR vs driver QR, say in the pitch what was dropped, re-check the APK choice. |

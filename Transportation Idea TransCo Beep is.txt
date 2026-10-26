@@ -1,0 +1,22 @@
+Transportation Idea: TransCo Beep ish idea:
+- Pain points that the idea addresses:
+	- Payment convenience
+	- The fare question
+	- Route trouble
+	- Vehicle tracking approximation
+- Main Novelty:
+	- Digitalization of Payment for public transportation through a QR system or/and NFC Beep cards (Jeepneys, Tricycles, Vans, buses, etc.)
+
+Main Features:
+1. QR/Beep Card payment form - Offers a cashless mode of payment.
+2. Fare computation - Computes your fair based on where you were picked up and where you dropped off.
+3. Information dissemination for applicable vehicles (Jeepneys, Vans, Buses). - Provides information on where jeepney routes are. (ex. Centro to Pacol route, Centro-Magsaysay-Diversion route)
+4. PUJ tracking for ETA. - Allows for waiting passengers to know where the nearest PUJ is and how long before they arrive. This allows them to make decision on how they would travel.
+5. Commute guide - Provides information on how to travel from point A to Point B. Offers tips on what to ride, where to exit, and etc.
+
+Who benefits and how?
+1. Daily Commuters - Allows payments and computing for fares easier through an automated and digital computing system.
+2. PUJ Operators - Takes away the inconvenience for payment transactions. (Computing changes, interacting with commuters while driving, etc.)
+3. Travelers - Allows travelers to know where PUJ routes are, so they know where to go and wait.
+
+
