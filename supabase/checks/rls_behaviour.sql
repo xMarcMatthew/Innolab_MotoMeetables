@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "66 of 66 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "75 of 75 PASS" and "no failures".
 
 begin;
 
@@ -65,9 +65,11 @@ insert into public.terminals (id, coop_id, name, lat, lng) values
   ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000c1', 'Test Terminal One', 13.62, 123.18),
   ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-0000000000c2', 'Test Terminal Two', 13.63, 123.19);
 
-insert into public.routes (id, terminal_id, destination_name, destination_lat, destination_lng, vehicle_type, guide_fare_regular) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'Test Place One', 13.64, 123.20, 'jeepney', 14),
-  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f2', 'Test Place Two', 13.65, 123.21, 'tricycle', 20);
+-- a1 has a line from terminal f1 to Test Place One, so boarding has something to snap a destination to.
+insert into public.routes (id, terminal_id, destination_name, destination_lat, destination_lng, vehicle_type, guide_fare_regular, route_line) values
+  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'Test Place One', 13.64, 123.20, 'jeepney', 14,
+   '{"type": "LineString", "coordinates": [[123.18, 13.62], [123.20, 13.64]]}'),
+  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f2', 'Test Place Two', 13.65, 123.21, 'tricycle', 20, null);
 
 insert into public.vehicles (id, coop_id, route_id, plate, vehicle_type, driver_id) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-001', 'jeepney', '00000000-0000-0000-0000-00000000000d'),
@@ -213,9 +215,27 @@ where vehicle_id = '00000000-0000-0000-0000-0000000000b1';
 select pg_temp.expect('driver cannot board', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', format('select public.board_vehicle(%L, 13.6301, 123.19)',
     (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
-select pg_temp.expect('commuter 11 m away boards', 'rows=1',
-  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19)',
+-- Destination checks (migration 8) run before the boarding below, since a repeat would hit LG003.
+select pg_temp.expect('commuter cannot board with half a destination', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19, 13.635, null)',
     (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('commuter cannot board with a destination outside the map', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19, 123.195, 13.635)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+-- The destination 13.635, 123.195 is on a1's line, three quarters of the way.
+select pg_temp.expect('commuter 11 m away boards', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19, 13.635, 123.195)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('a boarding with a destination stores a drop point', '1',
+  (select count(*)::text from public.boardings where drop_lat is not null));
+select pg_temp.expect('the stored drop point lies on the vehicle''s route line', 'true',
+  (select extensions.st_dwithin(
+            extensions.st_setsrid(extensions.st_makepoint(b.drop_lng, b.drop_lat), 4326)::extensions.geography,
+            extensions.st_setsrid(extensions.st_geomfromgeojson(r.route_line::text), 4326)::extensions.geography, 1)::text
+   from public.boardings b
+   join public.vehicles v on v.id = b.vehicle_id
+   join public.routes r on r.id = v.route_id
+   where b.drop_lat is not null));
 select pg_temp.expect('commuter sees their trip', '1',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.boardings'));
 select pg_temp.expect('commuter cannot board the same vehicle again within 10 min', 'err:LG003',
@@ -226,9 +246,22 @@ select pg_temp.expect('driver sees passengers today', '2',
 select pg_temp.expect('commuter gets no passenger count', '0',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select public.my_passengers_today()'));
 
+-- Drop points (migration 8): only the vehicle's own driver, and only today's points with a drop.
+select pg_temp.expect('logged out: cannot read drop points', 'err:42501',
+  pg_temp.try_val(null, 'select count(*) from public.my_drop_points_today()'));
+select pg_temp.expect('driver sees today''s drop points', '1',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select count(*) from public.my_drop_points_today()'));
+select pg_temp.expect('commuter gets no drop points', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.my_drop_points_today()'));
+select pg_temp.expect('driver with no vehicle gets no drop points', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000e', 'select count(*) from public.my_drop_points_today()'));
+
 -- A coop wrongly assigns commuter A as a driver: the driver functions still refuse them.
 update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a'
 where id = '00000000-0000-0000-0000-0000000000b2';
+-- A drop point on TEST-002, so the drop points check below has something to refuse.
+insert into public.boardings (commuter_id, vehicle_id, drop_lat, drop_lng) values
+  ('00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-0000000000b2', 13.635, 123.195);
 select pg_temp.expect('commuter assigned as driver still cannot set status', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_vehicle_status('loading')$q$));
 select pg_temp.expect('commuter assigned as driver still cannot save a location', 'err:42501',
@@ -237,6 +270,8 @@ select pg_temp.expect('commuter assigned as driver still cannot set a payment QR
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_my_payment_qr('00020126360014ph.ppmi.p2p6304ABCD')$q$));
 select pg_temp.expect('commuter assigned as driver still cannot read the board token', '0',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.vehicle_tokens'));
+select pg_temp.expect('commuter assigned as driver still gets no drop points', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.my_drop_points_today()'));
 
 -- Report by raising an error: the SQL Editor and CLI show only the last statement's output, and an
 -- error is the one ending that always rolls the test data back, wherever this file is run.

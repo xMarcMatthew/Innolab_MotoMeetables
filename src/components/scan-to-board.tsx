@@ -5,6 +5,7 @@ import { Linking, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { boardVehicle } from "@/lib/api/boarding";
+import type { LatLng } from "@/lib/api/commuter";
 
 type State =
   | { mode: "idle" }
@@ -16,7 +17,7 @@ type State =
 // Scan the QR on the driver's QR tab. board_vehicle only accepts a commuter within 100 m of the vehicle,
 // so this takes a fresh, precise fix (getMyLocation accepts one up to 5 min old). The QR text is not
 // checked here: the server answers "This is not a Larga boarding code" for anything else.
-export function ScanToBoard() {
+export function ScanToBoard({ destination, place }: { destination: LatLng; place: string }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<State>({ mode: "idle" });
   const fix = useRef<Promise<Location.LocationObject> | null>(null);
@@ -44,7 +45,11 @@ export function ScanToBoard() {
     setState({ mode: "boarding" });
     try {
       const { coords } = await fix.current!;
-      const plate = await boardVehicle(token, { lat: coords.latitude, lng: coords.longitude });
+      const plate = await boardVehicle(
+        token,
+        { lat: coords.latitude, lng: coords.longitude },
+        destination,
+      );
       setState({ mode: "boarded", plate });
     } catch (e) {
       setState({ mode: "error", message: (e as Error).message });
@@ -90,6 +95,7 @@ export function ScanToBoard() {
         <Text className="text-lg font-semibold text-foreground">
           Boarded {state.plate ?? "the vehicle"}
         </Text>
+        <Text className="text-muted">Getting off near {place}</Text>
         <Button label="Done" variant="link" onPress={() => setState({ mode: "idle" })} />
       </View>
     );

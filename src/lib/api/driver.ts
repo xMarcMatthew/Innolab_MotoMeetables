@@ -1,3 +1,5 @@
+import type { LineString } from "geojson";
+
 import type { VehicleType } from "@/lib/api/coop";
 import { supabase } from "@/lib/supabase";
 
@@ -11,10 +13,12 @@ export type MyVehicle = {
   driver_fare: number | null;
   payment_qr: string | null;
   route: {
+    id: string;
     destination_name: string;
     guide_fare_regular: number;
     guide_fare_discounted: number | null;
-    terminal: { name: string };
+    route_line: LineString | null;
+    terminal: { name: string; lat: number; lng: number };
   } | null;
 };
 
@@ -25,7 +29,7 @@ export async function getMyVehicle(): Promise<MyVehicle | null> {
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, plate, vehicle_type, status, driver_fare, payment_qr, route:routes(destination_name, guide_fare_regular, guide_fare_discounted, terminal:terminals(name))",
+      "id, plate, vehicle_type, status, driver_fare, payment_qr, route:routes(id, destination_name, guide_fare_regular, guide_fare_discounted, route_line, terminal:terminals(name, lat, lng))",
     )
     .eq("driver_id", auth.session.user.id)
     .maybeSingle();
@@ -61,6 +65,13 @@ export async function getPassengersToday(): Promise<number> {
   const { data, error } = await supabase.rpc("my_passengers_today");
   if (error) throw new Error(error.message);
   return data as number;
+}
+
+// Where today's boarded passengers get off, snapped to the route line (points only, never who).
+export async function getMyDropPointsToday(): Promise<{ lat: number; lng: number }[]> {
+  const { data, error } = await supabase.rpc("my_drop_points_today");
+  if (error) throw new Error(error.message);
+  return data as { lat: number; lng: number }[];
 }
 
 // null removes the QR. The database checks the format; the app checks the CRC (isValidQrPh) before calling.

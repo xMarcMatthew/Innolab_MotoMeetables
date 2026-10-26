@@ -59,7 +59,13 @@ export default function OptionsScreen() {
           onPress={() =>
             router.push({
               pathname: "/commuter/route",
-              params: { routeId: o.routeId, lat, lng, ...(me && { myLat: me.lat, myLng: me.lng }) },
+              params: {
+                routeId: o.routeId,
+                lat,
+                lng,
+                ...(label !== undefined && { label }),
+                ...(me && { myLat: me.lat, myLng: me.lng }),
+              },
             })
           }
           className="gap-2 rounded-lg border border-border bg-white p-4 active:opacity-80"
@@ -85,13 +91,9 @@ export default function OptionsScreen() {
             {o.terminalMetres !== null && ` · ${distance(o.terminalMetres)} away`}
           </Text>
           <StatusLine count={o.loadingCount} />
-          <FareLines option={o} />
+          <FareLines option={o} place={place} />
         </Pressable>
       ))}
-      {/* shortcut: one guide fare per route, add per-stop fares if the coops publish them */}
-      <Text className="text-sm text-muted">
-        Fares are the official guide for the whole route, even if you get off earlier.
-      </Text>
     </ScrollView>
   );
 }

@@ -2,30 +2,34 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Mapbox, { Camera, CircleLayer, MapView, ShapeSource, UserLocation } from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { router, useFocusEffect } from "expo-router";
-import type { FeatureCollection, Point } from "geojson";
-import { type ComponentRef, useCallback, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { type ComponentRef, useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getMyLocation } from "@/lib/my-location";
 import { QuickTrips } from "@/components/commuter/quick-trips";
-import { PinPicker } from "@/components/coop/pin-picker";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useDestinations } from "@/hooks/use-destinations";
-import type { LatLng } from "@/lib/api/commuter";
+import { type Destination, searchPlaces } from "@/lib/api/commuter";
 import { colors } from "@/lib/colors";
+import { UNNAMED_PIN } from "@/lib/saved-trips";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
 
-// Naga City centre, [lng, lat], until the terminals load. Padding is a constant: Camera re-frames on a new object.
+// Naga City centre, [lng, lat]
 const NAGA: [number, number] = [123.1948, 13.6218];
-const PADDING = { paddingTop: 140, paddingBottom: 96, paddingLeft: 48, paddingRight: 48 };
+
+// Mapbox results are kept with the text they answer, so a reply for older text never shows.
+type PlaceSearch = { text: string; places: Destination[]; failed: boolean };
 
 export default function CommuterHome() {
   const insets = useSafeAreaInsets();
-  const { destinations, terminals, loading, error, reload } = useDestinations();
+  const { destinations, loading, error, reload } = useDestinations();
   const [query, setQuery] = useState("");
-  const [pinMode, setPinMode] = useState(false);
-  const [pin, setPin] = useState<LatLng | null>(null);
+  const [listOpen, setListOpen] = useState(false);
+  const [placeSearch, setPlaceSearch] = useState<PlaceSearch | null>(null);
+  const [pin, setPin] = useState<Destination | null>(null);
   const [showMe, setShowMe] = useState(false);
   const camera = useRef<ComponentRef<typeof Camera>>(null);
 
@@ -36,29 +40,45 @@ export default function CommuterHome() {
     }, []),
   );
 
-  const dots = useMemo<FeatureCollection<Point>>(
-    () => ({
-      type: "FeatureCollection",
-      features: terminals.map((t) => ({
-        type: "Feature",
-        properties: { name: t.name },
-        geometry: { type: "Point", coordinates: [t.lng, t.lat] },
-      })),
-    }),
-    [terminals],
-  );
-  const bounds = useMemo(() => {
-    if (terminals.length === 0) return undefined;
-    const lngs = terminals.map((t) => t.lng);
-    const lats = terminals.map((t) => t.lat);
-    return {
-      sw: [Math.min(...lngs), Math.min(...lats)],
-      ne: [Math.max(...lngs), Math.max(...lats)],
-    };
-  }, [terminals]);
+  const text = query.trim();
+  const q = text.toLowerCase();
+  const ours = q ? destinations.filter((d) => d.name.toLowerCase().includes(q)) : [];
+  // Place search starts at 3 characters, 300 ms after the last keystroke.
+  const placeText = listOpen && text.length >= 3 ? text : "";
 
-  const q = query.trim().toLowerCase();
-  const matches = q ? destinations.filter((d) => d.name.toLowerCase().includes(q)) : [];
+  useEffect(() => {
+    if (placeText === "") return;
+    let stale = false;
+    const timer = setTimeout(() => {
+      searchPlaces(placeText)
+        .then((places) => !stale && setPlaceSearch({ text: placeText, places, failed: false }))
+        .catch(() => !stale && setPlaceSearch({ text: placeText, places: [], failed: true }));
+    }, 300);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [placeText]);
+
+  const done = placeText !== "" && placeSearch?.text === placeText ? placeSearch : null;
+  const ourNames = new Set(ours.map((d) => d.name.toLowerCase()));
+  const rows = [
+    ...ours,
+    ...(done?.places.filter((p) => !ourNames.has(p.name.toLowerCase())) ?? []),
+  ];
+  const searching = loading || (placeText !== "" && !done);
+
+  function pick(d: Destination) {
+    Keyboard.dismiss();
+    setPin(d);
+    setQuery(d.name);
+    setListOpen(false);
+    camera.current?.setCamera({
+      centerCoordinate: [d.lng, d.lat],
+      zoomLevel: 15,
+      animationDuration: 600,
+    });
+  }
 
   async function nearMe() {
     const me = await getMyLocation(true);
@@ -77,58 +97,41 @@ export default function CommuterHome() {
     });
   }
 
-  if (pinMode) {
-    return (
-      <View className="flex-1 gap-4 bg-background px-4" style={{ paddingTop: insets.top + 16 }}>
-        <Text className="text-lg font-semibold text-foreground">
-          Tap the map where you want to go
-        </Text>
-        <PinPicker pin={pin} onPick={setPin} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !pin }}
-          disabled={!pin}
-          onPress={() =>
-            pin &&
-            router.push({ pathname: "/commuter/options", params: { lat: pin.lat, lng: pin.lng } })
-          }
-          className={`min-h-12 items-center justify-center rounded-lg bg-primary active:opacity-80 ${pin ? "" : "opacity-50"}`}
-        >
-          <Text className="font-semibold text-white">Show rides to this pin</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setPinMode(false)}
-          className="min-h-12 items-center justify-center rounded-lg border border-muted bg-white active:opacity-80"
-        >
-          <Text className="font-semibold text-foreground">Back to search</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-background">
-      <MapView style={{ flex: 1 }} styleURL={process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL}>
-        <Camera
-          ref={camera}
-          defaultSettings={{ centerCoordinate: NAGA, zoomLevel: 12 }}
-          bounds={bounds}
-          padding={PADDING}
-          animationDuration={0}
-        />
-        <ShapeSource id="terminals" shape={dots}>
-          {/* Map layers take raw colors: accent from src/lib/colors.ts */}
-          <CircleLayer
-            id="terminal-dots"
-            style={{
-              circleColor: colors.accent,
-              circleRadius: 7,
-              circleStrokeColor: "#FFFFFF",
-              circleStrokeWidth: 2,
+      <MapView
+        style={{ flex: 1 }}
+        styleURL={process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL}
+        onPress={(feature) => {
+          if (feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          Keyboard.dismiss();
+          setListOpen(false);
+          setPin({ lat, lng, name: UNNAMED_PIN });
+        }}
+      >
+        <Camera ref={camera} defaultSettings={{ centerCoordinate: NAGA, zoomLevel: 12 }} />
+        {pin && (
+          <ShapeSource
+            id="pin"
+            shape={{
+              type: "Feature",
+              properties: {},
+              geometry: { type: "Point", coordinates: [pin.lng, pin.lat] },
             }}
-          />
-        </ShapeSource>
+          >
+            {/* Map layers take raw colors from src/lib/colors.ts */}
+            <CircleLayer
+              id="pin-circle"
+              style={{
+                circleColor: colors.accent,
+                circleRadius: 9,
+                circleStrokeColor: colors.white,
+                circleStrokeWidth: 3,
+              }}
+            />
+          </ShapeSource>
+        )}
         {showMe && <UserLocation />}
       </MapView>
 
@@ -137,8 +140,11 @@ export default function CommuterHome() {
         <TextInput
           accessibilityLabel="Where to?"
           value={query}
-          onChangeText={setQuery}
-          placeholder="Where to? e.g. Pacol"
+          onChangeText={(t) => {
+            setQuery(t);
+            setListOpen(true);
+          }}
+          placeholder="Where to? e.g. Sports complex"
           placeholderTextColor={colors.muted}
           returnKeyType="search"
           className="min-h-12 rounded-lg border border-border bg-white px-4 text-base text-foreground"
@@ -155,53 +161,70 @@ export default function CommuterHome() {
             </Pressable>
           </View>
         )}
-        {q !== "" && (
+        {listOpen && q !== "" && (
           <ScrollView
             className="max-h-72 rounded-lg border border-border bg-white"
             keyboardShouldPersistTaps="handled"
           >
-            {matches.map((d) => (
+            {rows.map((d) => (
               <Pressable
-                key={d.name}
+                key={`${d.name}|${d.lat}|${d.lng}`}
                 accessibilityRole="button"
-                onPress={() =>
-                  router.push({
-                    pathname: "/commuter/options",
-                    params: { lat: d.lat, lng: d.lng, label: d.name },
-                  })
-                }
-                className="min-h-12 justify-center border-b border-border px-4 active:opacity-80"
+                onPress={() => pick(d)}
+                className="min-h-12 justify-center border-b border-border px-4 py-2 active:opacity-80"
               >
                 <Text className="text-base text-foreground">{d.name}</Text>
+                {!!d.detail && <Text className="text-sm text-muted">{d.detail}</Text>}
               </Pressable>
             ))}
-            {matches.length === 0 && (
+            {rows.length === 0 && (
               <Text className="px-4 py-3 text-muted">
-                {loading
-                  ? "Loading destinations..."
-                  : `No destination called "${query.trim()}" yet. Try Drop a pin.`}
+                {searching
+                  ? "Searching..."
+                  : text.length < 3
+                    ? "Keep typing to search places"
+                    : `No place called "${text}" found. Tap the map instead.`}
               </Text>
+            )}
+            {done?.failed && (
+              <Text className="px-4 py-3 text-muted">Place search is unavailable right now</Text>
             )}
           </ScrollView>
         )}
       </View>
 
-      <View className="absolute bottom-4 left-4 right-4 flex-row gap-3">
+      <View className="absolute bottom-4 left-4 right-4 gap-3">
+        {pin ? (
+          <Card>
+            <Text numberOfLines={1} className="text-lg font-semibold text-foreground">
+              {pin.name}
+            </Text>
+            <Button
+              label="Show rides"
+              onPress={() =>
+                router.push({
+                  pathname: "/commuter/options",
+                  params: {
+                    lat: pin.lat,
+                    lng: pin.lng,
+                    ...(pin.name !== UNNAMED_PIN && { label: pin.name }),
+                  },
+                })
+              }
+            />
+          </Card>
+        ) : (
+          <View className="rounded-lg border border-border bg-white px-4 py-3">
+            <Text className="text-muted">Search a place or tap the map</Text>
+          </View>
+        )}
         <Pressable
           accessibilityRole="button"
-          onPress={() => setPinMode(true)}
-          className="min-h-12 flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-muted bg-white active:opacity-80"
-        >
-          <MaterialCommunityIcons name="map-marker-plus" size={20} color={colors.foreground} />
-          <Text className="font-semibold text-foreground">Drop a pin</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+          accessibilityLabel="Near me"
           onPress={nearMe}
-          className="min-h-12 flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-muted bg-white active:opacity-80"
+          className="size-12 items-center justify-center self-end rounded-full border border-muted bg-white active:opacity-80"
         >
-          <MaterialCommunityIcons name="crosshairs-gps" size={20} color={colors.foreground} />
-          <Text className="font-semibold text-foreground">Near me</Text>
+          <MaterialCommunityIcons name="crosshairs-gps" size={24} color={colors.foreground} />
         </Pressable>
       </View>
     </View>

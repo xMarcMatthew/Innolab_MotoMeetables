@@ -4,6 +4,22 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (7:45 am, after JM's demo board), Matt → JM and Rj: place search, drop-off fare, driver Map tab
+
+- **Built, tsc and lint clean, not phone-tested, uncommitted** (three worker chats; briefs with their Reports in `briefs/worker-db-drop-fares.md`, `worker-commuter-demo.md`, `worker-driver-map.md`; the plan and why in `plan-matt-demo.md`):
+  - **Commuter Home:** typing searches our destination names first, then real Naga places through the Mapbox Search Box API (checked live: "Sports complex" gives Naga City Sports Complex first; the Pacol campus is "Ateneo de Naga University - Bonoan Campus", so type "Ateneo" or "Bonoan"). No terminal dots on open. A search pick or a map tap drops one pin and shows a card with **Show rides**. The Drop a pin mode is gone; Near me is a round icon button.
+  - **Options and Route:** the headline is now the **fare from the terminal to your drop point** ("Fare to Naga City Sports Complex ₱19.80", discounted and km under it); the full-route guide and the driver's fare stay below it, the driver's fare still compared with the full-route guide. Route draws the drop point with a "Get off here" label. `label` now travels Home → Options → Route.
+  - **Scan to board** sends the destination; "Boarded SMP-1001 · Getting off near …".
+  - **Driver Map tab** (Trip · QR · Map · Account): route line, live jeeps, today's drop-off points labelled "Drop-off", refreshed every 5 s.
+- **JM, migration 8** `supabase/migrations/20261027093000_drop_points_and_fares.sql`: `boardings.drop_lat/drop_lng`, `snap_to_route` helper, `nearest_routes` recreated with 5 appended columns (`drop_lat`, `drop_lng`, `drop_km`, `fare_regular`, `fare_discounted`), `board_vehicle` recreated with 2 optional destination args (the 3-arg one is dropped; old calls work through the defaults), `my_drop_points_today` (points only). **Not run anywhere**: Matt's CLI is on another Supabase account. Please run the rolled-back pre-push test (migration + both check files); expected **`nearest_routes.sql` 19/19, `rls_behaviour.sql` 75/75, `rls.sql` 30 OK**, then push. The DB worker's three judgment calls are in its Report (long-line fixture guide 25, an extra lineless-jeepney check, one owner-inserted boarding on TEST-002).
+  - **Until the push, Scan to board fails** ("could not find function board_vehicle with p_dest_lat"); Options and Route show today's fare lines because every new column is read with `?? null`.
+  - Phone test after the push: Home, type "Sports", pick Naga City Sports Complex, Show rides → Centro to Pacol first at about ₱19.80 (6.9 km) with "Drops you 620 m" (Carolina and Panicuason follow, San Felipe last at 1.8 km); Route shows "Get off here"; two phones: Scan to board, then the driver's Map tab shows a "Drop-off" dot where the commuter gets off.
+- **Rj:** your finding 1 (fare buried) is covered by the new headline; the hex strokes in Home and Route are now `colors.white`. Nothing to do in the coop screens: a route a coop adds in the app has no line, so it keeps its guide fare and gets no drop points, by design.
+- **Decided:** MVP stays terminal → destination. Round trips, ETA, pickup pin and driver acceptance are out and said in the pitch.
+- **Suggested commits** (Matt's call, nothing committed yet): `feat(commuter): search Naga places and pin them on the home map`, `feat(db): drop points and the fare to the drop point`, `feat(commuter): show the fare to your drop point`, `feat(driver): show today's drop points on a map`.
+
+---
+
 ## Oct 28 (morning), JM → Matt and Rj: demo board loaded, push cut, demo on the dev build
 
 - **Demo board is live** (`supabase/seed/demo.sql`): 12 more sample jeeps, `SMP-1003` to `SMP-3002`. Search Pacol now shows "now loading" counts, and SMP-1005 (₱26.00 vs the ₱24.20 guide) and SMP-2004 (₱35.00 vs ₱32.80) show "Above the official fare". Rj's `naga.sql` rows are untouched. Checks after loading: 66/66, 12/12, 28 OK.

@@ -1,4 +1,11 @@
-import Mapbox, { Camera, CircleLayer, LineLayer, MapView, ShapeSource } from "@rnmapbox/maps";
+import Mapbox, {
+  Camera,
+  CircleLayer,
+  LineLayer,
+  MapView,
+  ShapeSource,
+  SymbolLayer,
+} from "@rnmapbox/maps";
 import { useLocalSearchParams } from "expo-router";
 import type { Feature, FeatureCollection, Position } from "geojson";
 import { useMemo } from "react";
@@ -23,13 +30,15 @@ const point = (kind: string, coordinates: Position): Feature => ({
 });
 
 export default function RouteScreen() {
-  const { routeId, lat, lng, myLat, myLng } = useLocalSearchParams<{
+  const { routeId, lat, lng, label, myLat, myLng } = useLocalSearchParams<{
     routeId: string;
     lat: string;
     lng: string;
+    label?: string;
     myLat?: string;
     myLng?: string;
   }>();
+  const place = label ?? "your pin";
   const { route, loading, error, reload } = useRouteDetail(
     routeId,
     Number(lat),
@@ -51,6 +60,7 @@ export default function RouteScreen() {
           : []),
         point("terminal", terminal),
         ...(line.length > 0 ? [point("destination", line[line.length - 1])] : []),
+        ...(route.dropPoint ? [point("drop", [route.dropPoint.lng, route.dropPoint.lat])] : []),
       ],
     };
     const all = [terminal, ...line];
@@ -135,6 +145,30 @@ export default function RouteScreen() {
                 circleStrokeWidth: 2,
               }}
             />
+            {/* Labelled, never color alone: the dot shares the live vehicles' color. */}
+            <CircleLayer
+              id="drop"
+              filter={["==", ["get", "kind"], "drop"]}
+              style={{
+                circleColor: colors.secondary,
+                circleRadius: 8,
+                circleStrokeColor: colors.white,
+                circleStrokeWidth: 2,
+              }}
+            />
+            <SymbolLayer
+              id="drop-label"
+              filter={["==", ["get", "kind"], "drop"]}
+              style={{
+                textField: "Get off here",
+                textSize: 12,
+                textColor: colors.foreground,
+                textHaloColor: colors.white,
+                textHaloWidth: 1.5,
+                textOffset: [0, 1.6],
+                textAllowOverlap: true,
+              }}
+            />
           </ShapeSource>
           <LiveVehicles routeIds={[routeId]} />
         </MapView>
@@ -146,7 +180,7 @@ export default function RouteScreen() {
           {route.destinationName}
         </Text>
         <StatusLine count={route.loadingCount} />
-        <FareLines option={route} />
+        <FareLines option={route} place={place} />
         <Pressable
           accessibilityRole="button"
           onPress={goToTerminal}
@@ -154,7 +188,7 @@ export default function RouteScreen() {
         >
           <Text className="font-semibold text-white">Go to terminal</Text>
         </Pressable>
-        <ScanToBoard />
+        <ScanToBoard destination={{ lat: Number(lat), lng: Number(lng) }} place={place} />
         {/* After H10: Pay (the vehicle's payment_qr) goes here. */}
       </ScrollView>
     </View>
