@@ -4,6 +4,22 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (late night), JM → everyone: where things stand, what is next
+
+**State:** the snapshot is the "Current hour / phase" row in `prep-plan.md`. Live database: migrations 1 to 6 plus the Naga seed; checks 53/53, 12/12, 25/25 OK. Every pushed migration was first run in a rolled-back pre-push test (migration + its check file in one `begin ... rollback`).
+
+**JM next, in order:**
+1. **Boarding** (planned, not started): migration 7 `board_vehicle(token, lat, lng)` (commuters only; vehicle position fresh under 30 s and within 100 m; no second boarding of the same vehicle within 10 min; inserts the trip; a board token for every existing and new vehicle; `vehicle_tokens` readable only by that vehicle's driver). Then a driver **QR** tab (board QR full screen, passengers today). Open question for Matt: who wires **Scan to board** into the slot in `route.tsx` (JM can, as with the live markers).
+2. Promote Rj's coop and driver test accounts (waiting on the emails), coop redirect test.
+3. Firebase (`google-services.json`) and one rebuild for push; then a **standalone demo APK** (a dev build only runs while a laptop serves the code).
+4. Before the H16 freeze: long GPS battery test, the two small fixes from the live GPS review (End trip offline label; the GPS task stops itself when the vehicle is unassigned), `/ponytail-audit`, the UI/UX pass (designer's look + Pro Max checklist).
+
+**Matt:** phone-test your commuter flow (search Pacol, ride options, route, live jeep markers). **Mentor's idea, saved trips**, is in the Decisions Log as proposed: recent and pinned destinations on the phone first, no database change.
+
+**Rj:** install the dev build (JM invited you to the Expo org), send JM your test account emails, phone-test the coop screens.
+
+---
+
 ## Oct 27 (night), JM → Matt and Rj: live GPS from the driver phone works (migration 5)
 
 - **Workers' code is merged and reviewed** (Matt's push `0a4beec`): tsc and lint clean, `/for-drivers` fix and no "Coming soon" confirmed. After pulling, run `npm install` and start Metro once (`npm start`): Metro regenerates the typed routes, otherwise `npx tsc` reports `/waiting`, `/for-drivers` and `/commuter/options` as unknown.
