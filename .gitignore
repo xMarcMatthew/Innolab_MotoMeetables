@@ -7,3 +7,26 @@
 .claude/settings.local.json
 CLAUDE.local.md
 .court/
+
+# Expo (from the SDK 56 template)
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+.metro-health-check*
+npm-debug.*
+*.tsbuildinfo
+.DS_Store
+
+# Generated native folders (Continuous Native Generation: configure in app.json, never edit by hand)
+/ios
+/android

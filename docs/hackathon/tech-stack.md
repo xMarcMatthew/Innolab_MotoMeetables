@@ -9,7 +9,7 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 | Layer | Pick | Why |
 | --- | --- | --- |
 | App | **Expo SDK 56** (React Native 0.85, React 19), TypeScript, **Android APK** | The versions we already know work together with NativeWind 4, Reanimated 4, rnmapbox and task-manager |
-| Routing | **Expo Router** (file-based, `app/`) | Route groups per role |
+| Routing | **Expo Router** (file-based, `src/app/`) | One folder per role |
 | Styling | **NativeWind 4** (Tailwind 3), theme tokens in `tailwind.config.js` | Tailwind classes we already use; the designer's colors live in one file |
 | State and forms | **Zustand** (`stores/`), **react-hook-form + Zod** (`lib/validation.ts`) | Team comfort; few stores, few forms |
 | Backend | **Supabase only, no custom server**: Auth, Postgres + **PostGIS**, **RLS**, RPCs, **Realtime**, Edge Functions (Deno) | One service, one language (TypeScript), nothing of our own to host |
@@ -39,7 +39,7 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 - Supabase Auth, **email + password**. **Email confirmation off** for the demo (the built-in email sender is heavily rate-limited; exact limit not checked).
 - `profiles.role`: `commuter`, `driver`, `coop`. Everyone signs up as a commuter. **Users can never change their own role**: driver and coop accounts are seeded or promoted by us (or a later coop RPC), never from the client.
 - Session stored with AsyncStorage. The app holds only the anon (publishable) key.
-- Expo Router groups: `app/(auth)`, `app/(commuter)`, `app/(driver)`, `app/(coop)`. The role picks the home screen.
+- Routes: `src/app/commuter/`, `src/app/driver/`, `src/app/coop/`, plus the sign-in screens. Plain folders, not `(groups)`: groups add no URL segment, so three `(group)/index.tsx` files would all claim `/`. The role picks the home screen; until login works, `src/app/index.tsx` is a temporary role picker.
 
 ### Core flow: destination-first guide (Must-have)
 1. Commuter picks where they want to go, two ways like Google Maps: **search** a place and pick from the result list, or **drop a pin** on the map.
@@ -114,15 +114,15 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 
 **Folders**
 ```
-app/          routes (Expo Router)
-components/   UI grouped by feature (commuter/, driver/, coop/)
-hooks/        per-screen data hooks
-stores/       Zustand global state
-lib/          supabase client, lib/api/<feature>.ts data layers, validation.ts
-types/        shared TS types
-supabase/     migrations/, functions/, checks/
+src/app/          routes (Expo Router): commuter/, driver/, coop/
+src/components/   UI grouped by feature (commuter/, driver/, coop/)
+src/hooks/        per-screen data hooks
+src/stores/       Zustand global state
+src/lib/          supabase client, lib/api/<feature>.ts data layers, validation.ts
+src/types/        shared TS types
+supabase/         migrations/, functions/, checks/
 ```
-Data flows screen → hook → `lib/api/<feature>.ts` → Supabase (a table query under RLS, or `supabase.rpc(...)`).
+App code lives under `src/` (the SDK 56 template's layout); import it as `@/...`. Data flows screen → hook → `lib/api/<feature>.ts` → Supabase (a table query under RLS, or `supabase.rpc(...)`).
 
 **Database**
 - Every schema change is a migration made with `npx supabase migration new <name>`.
@@ -137,6 +137,9 @@ Data flows screen → hook → `lib/api/<feature>.ts` → Supabase (a table quer
 
 **Dev loop**
 - `npm start`: Metro with hot reload for JS changes, on the dev build.
+- Add packages with `npx expo install <pkg>`, not `npm install`: it picks the versions that match SDK 56.
+- Before pushing: `npx tsc --noEmit` and `npm run lint`.
+- Colors: use the Palette A class names from `tailwind.config.js` (`bg-background`, `text-foreground`, `text-muted`, `bg-primary`, `bg-accent`, `bg-secondary`, `border-border`, `text-destructive`), never hex values in screens. Orange `accent` is for badges and buttons with white text only.
 - **Install every native module before the first dev build**: `@rnmapbox/maps`, `expo-location`, `expo-task-manager`, `expo-camera`, `expo-notifications`, `react-native-svg`, `react-native-qrcode-svg`. Adding one later means all three of us rebuild (`npm install`, `npx expo prebuild -p android`, `npm run android`).
 - No app test suite. We test on real phones.
 
