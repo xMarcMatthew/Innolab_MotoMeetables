@@ -2,8 +2,8 @@ import { Text, View } from "react-native";
 
 export default function DriverHome() {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>PLACEHOLDER: driver home (owner: JM)</Text>
+    <View className="flex-1 items-center justify-center bg-background">
+      <Text className="text-foreground">PLACEHOLDER: driver home (owner: JM)</Text>
     </View>
   );
 }

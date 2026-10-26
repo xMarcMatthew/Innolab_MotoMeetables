@@ -139,6 +139,7 @@ App code lives under `src/` (the SDK 56 template's layout); import it as `@/...`
 - `npm start`: Metro with hot reload for JS changes, on the dev build.
 - Add packages with `npx expo install <pkg>`, not `npm install`: it picks the versions that match SDK 56.
 - Before pushing: `npx tsc --noEmit` and `npm run lint`.
+- Colors: use the Palette A class names from `tailwind.config.js` (`bg-background`, `text-foreground`, `text-muted`, `bg-primary`, `bg-accent`, `bg-secondary`, `border-border`, `text-destructive`), never hex values in screens. Orange `accent` is for badges and buttons with white text only.
 - **Install every native module before the first dev build**: `@rnmapbox/maps`, `expo-location`, `expo-task-manager`, `expo-camera`, `expo-notifications`, `react-native-svg`, `react-native-qrcode-svg`. Adding one later means all three of us rebuild (`npm install`, `npx expo prebuild -p android`, `npm run android`).
 - No app test suite. We test on real phones.
 
