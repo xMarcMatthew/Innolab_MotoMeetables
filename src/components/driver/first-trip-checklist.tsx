@@ -2,8 +2,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { useEffect, useState } from "react";
-import { AppState, Linking, Pressable, Text, View } from "react-native";
+import { AppState, Linking, Text, View } from "react-native";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { colors } from "@/lib/colors";
 
 type Permission = { granted: boolean; status: string; canAskAgain: boolean };
@@ -24,7 +26,7 @@ function Step({
   // A first Deny can still be asked again; only a permanent refusal needs the Settings app.
   const blocked = permission?.status === "denied" && !permission.canAskAgain;
   return (
-    <View className="gap-2 rounded-lg border border-border bg-white p-4">
+    <Card>
       <Text className="font-semibold text-foreground">{title}</Text>
       {body && <Text className="text-muted">{body}</Text>}
       {done ? (
@@ -34,16 +36,13 @@ function Step({
         </View>
       ) : (
         onAllow && (
-          <Pressable
-            accessibilityRole="button"
+          <Button
+            label={blocked ? "Open settings" : "Allow"}
             onPress={blocked ? () => Linking.openSettings() : onAllow}
-            className="min-h-12 items-center justify-center rounded-lg bg-primary active:opacity-80"
-          >
-            <Text className="font-semibold text-white">{blocked ? "Open settings" : "Allow"}</Text>
-          </Pressable>
+          />
         )
       )}
-    </View>
+    </Card>
   );
 }
 

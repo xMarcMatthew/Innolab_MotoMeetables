@@ -4,6 +4,21 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 28 (4 am), Rj → Matt: UI/UX pass on the shared pieces, and your screens' findings
+
+- **What is happening:** a UI/UX audit (ui-ux-pro-max checklist) found 10 issues. Rj's worker chat is adding shared components in `src/components/ui/` (`Button`, `Card`, `Badge`, `EmptyState`, `LoadingState`/`ErrorState`) and restyling the driver, auth and coop screens. Palette A is unchanged and **nobody touches your files** (`commuter/*`, `components/commuter/*`) while you nap.
+- **When the pieces land (pull first),** `Button` and `Card` give you pressed and disabled states, 48 px touch targets and `shadow-sm` for free. These are your findings, in demo order:
+  1. **Fare is buried** (`options.tsx:76-81`, `ride-lines.tsx:21-31`): the driver's fare is the answer but looks like every other line. Make it `text-2xl font-bold` with the guide fare in `text-muted`; add a chevron-right to the card. The bus icon on `options.tsx:62` shows for jeepneys too; use a jeepney-ish icon.
+  2. **Map markers use color only** (`route.tsx:116-135`): orange terminal, blue destination, no labels. Add a Mapbox `SymbolLayer` text ("Terminal" / "Destination") or a legend row under the map. This breaks the "never color alone" rule.
+  3. **Orange badge text** (`ride-lines.tsx:12`): white on orange is 3.0:1, so use `text-lg font-bold` (large text passes). `Badge` does this.
+  4. **Hex values:** map strokes `"#FFFFFF"` in `commuter/(home)/index.tsx:126` and `route.tsx:122,130`, and the tab bar in `commuter/_layout.tsx:13`. `colors.white` is being added to `src/lib/colors.ts`.
+  5. **Floating search input** (`commuter/(home)/index.tsx:135-143`): no shadow and a faint border. Add `shadow-sm`.
+  6. **Padding:** `options.tsx` uses `p-4`, most screens use `p-6`. Pick one.
+  7. **Bare spinners and plain empty text** in `options.tsx:20,26-43` and `route.tsx:70`: use `LoadingState` and `EmptyState`.
+- Nothing here changes data or logic. Unsure about any of it, ask Rj.
+
+---
+
 ## Oct 27 (night), JM → Matt and Rj: live GPS from the driver phone works (migration 5)
 
 - **Workers' code is merged and reviewed** (Matt's push `0a4beec`): tsc and lint clean, `/for-drivers` fix and no "Coming soon" confirmed. After pulling, run `npm install` and start Metro once (`npm start`): Metro regenerates the typed routes, otherwise `npx tsc` reports `/waiting`, `/for-drivers` and `/commuter/options` as unknown.

@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 import { PaymentQrScanner } from "@/components/driver/payment-qr-scanner";
+import { Button } from "@/components/ui/button";
+import { useSavedFlash } from "@/hooks/use-saved-flash";
 
 type Mode = "idle" | "scan" | "show";
 
@@ -17,16 +19,15 @@ export function PaymentQrSection({
   qr: string | null;
   fare: number | null; // the driver's fare, else the guide fare
   busy: boolean;
-  onSave: (qr: string | null) => Promise<void>;
+  onSave: (qr: string | null) => Promise<boolean>; // true when it saved
 }) {
   const [mode, setMode] = useState<Mode>("idle");
+  const [saved, flashSaved] = useSavedFlash();
 
   async function save(next: string | null) {
     setMode("idle");
-    await onSave(next);
+    if (await onSave(next)) flashSaved();
   }
-
-  const button = "items-center rounded-lg py-3";
 
   return (
     <View className="gap-3">
@@ -44,53 +45,32 @@ export function PaymentQrSection({
             Scan with GCash, Maya or your bank app. Enter{" "}
             {fare !== null ? `₱${fare.toFixed(2)}` : "the fare"} yourself.
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setMode("idle")}
-            className={`${button} border border-muted bg-white`}
-          >
-            <Text className="font-semibold text-foreground">Close</Text>
-          </Pressable>
+          <Button label="Close" variant="outline" onPress={() => setMode("idle")} />
         </View>
       ) : qr ? (
         <View className="gap-2">
-          <Pressable
-            accessibilityRole="button"
-            disabled={busy}
-            onPress={() => setMode("show")}
-            className={`${button} bg-primary`}
-          >
-            <Text className="font-semibold text-white">Show payment QR</Text>
-          </Pressable>
+          <Button label="Show payment QR" disabled={busy} onPress={() => setMode("show")} />
           <View className="flex-row gap-2">
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              label="Replace"
+              variant="outline"
               disabled={busy}
               onPress={() => setMode("scan")}
-              className={`${button} flex-1 border border-muted bg-white`}
-            >
-              <Text className="font-semibold text-foreground">Replace</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
+              className="flex-1"
+            />
+            <Button
+              label="Remove"
+              variant="destructive-text"
               disabled={busy}
               onPress={() => save(null)}
-              className={`${button} flex-1 border border-muted bg-white`}
-            >
-              <Text className="font-semibold text-destructive">Remove</Text>
-            </Pressable>
+              className="flex-1"
+            />
           </View>
         </View>
       ) : (
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => setMode("scan")}
-          className={`${button} bg-primary`}
-        >
-          <Text className="font-semibold text-white">Scan my payment QR</Text>
-        </Pressable>
+        <Button label="Scan my payment QR" disabled={busy} onPress={() => setMode("scan")} />
       )}
+      {saved && <Text className="font-semibold text-foreground">Saved ✓</Text>}
     </View>
   );
 }

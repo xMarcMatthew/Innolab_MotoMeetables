@@ -1,7 +1,8 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Linking, Text, View } from "react-native";
 
+import { Button } from "@/components/ui/button";
 import { isValidQrPh } from "@/lib/qrph";
 
 // Scans one QR and passes it on only if it is a QR Ph payment code; anything else shows a message and
@@ -36,18 +37,11 @@ export function PaymentQrScanner({
     return (
       <View className="gap-3">
         <Text className="text-foreground">Larga needs the camera to scan your payment QR.</Text>
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={blocked ? "Open settings" : "Allow camera"}
           onPress={blocked ? () => Linking.openSettings() : requestPermission}
-          className="items-center rounded-lg bg-primary py-3"
-        >
-          <Text className="font-semibold text-white">
-            {blocked ? "Open settings" : "Allow camera"}
-          </Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={onCancel} className="items-center py-2">
-          <Text className="font-semibold text-primary">Cancel</Text>
-        </Pressable>
+        />
+        <Button label="Cancel" variant="link" onPress={onCancel} />
       </View>
     );
   }
@@ -66,9 +60,7 @@ export function PaymentQrScanner({
       {rejected && (
         <Text className="font-semibold text-destructive">That isn&apos;t a QR Ph payment code</Text>
       )}
-      <Pressable accessibilityRole="button" onPress={onCancel} className="items-center py-2">
-        <Text className="font-semibold text-primary">Cancel</Text>
-      </Pressable>
+      <Button label="Cancel" variant="link" onPress={onCancel} />
     </View>
   );
 }

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { signOut } from "@/components/sign-out-button";
+import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { shortName } from "@/lib/names";
 import { supabase } from "@/lib/supabase";
 
@@ -35,19 +38,13 @@ export default function DriverAccount() {
   return (
     <View className="flex-1 gap-6 bg-background p-6">
       {error ? (
-        <View className="items-center gap-4">
-          <Text className="text-center text-destructive">Could not load your account: {error}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setError(null);
-              setAttempt((n) => n + 1);
-            }}
-            className="min-h-12 justify-center px-4 active:opacity-80"
-          >
-            <Text className="font-semibold text-primary">Retry</Text>
-          </Pressable>
-        </View>
+        <ErrorState
+          message={`Could not load your account: ${error}`}
+          onRetry={() => {
+            setError(null);
+            setAttempt((n) => n + 1);
+          }}
+        />
       ) : account ? (
         <View className="gap-1">
           <Text className="text-2xl font-semibold text-foreground">
@@ -58,15 +55,9 @@ export default function DriverAccount() {
           <Text className="text-muted">Riders see you as {shortName(account.fullName)}</Text>
         </View>
       ) : (
-        <ActivityIndicator />
+        <LoadingState />
       )}
-      <Pressable
-        accessibilityRole="button"
-        onPress={signOut}
-        className="min-h-12 items-center justify-center rounded-lg border border-muted bg-white active:opacity-80"
-      >
-        <Text className="font-semibold text-foreground">Sign out</Text>
-      </Pressable>
+      <Button label="Sign out" variant="outline" onPress={signOut} />
     </View>
   );
 }
