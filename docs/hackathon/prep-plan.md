@@ -38,11 +38,11 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 
 | Field | Value |
 | --- | --- |
-| **Theme** |  |
-| **Chosen idea (one sentence)** |  |
-| **Target users** |  |
-| **Core user flow** (the one flow that must work) |  |
-| **Must-have features** |  |
+| **Theme** | Develop a purpose-driven digital solution that empowers a local community, non-profit organization, or grassroots movement in the Bicol Region to solve a real-world problem they face today. Find a real problem, prove that it matters, and build a working solution that people can actually use. |
+| **Chosen idea (one sentence)** | A Naga City commute app (working name TransCo, rebrand pending): tells commuters which jeepney or tricycle to take, where to wait and get off, the correct fare, and where the jeepney is now. See founder/idea.md. |
+| **Target users** | Two account types: **commuters** (find a ride, see fare and ETA) and **drivers** (their phone shares the PUJ's live location). Route data comes from crowdsourcing and LGUs. |
+| **Core user flow** (the one flow that must work) | Commuter sets where they are and where they are going, then sees the right route, where to wait, where to get off, and the fare. |
+| **Must-have features** | Route data for Naga, route and fare lookup, commuter and driver accounts. (Scope proposal in founder/feasibility.md; payment and live tracking go through third-party services.) |
 | **Web or mobile** | Web (default), PWA as a Satisfier |
 | **Backend** | Laravel or Flask (decide and log it in the Decisions Log) |
 | **Current hour / phase** |  |
@@ -194,7 +194,7 @@ A PWA lets judges and users add our web app to their phone home screen like a re
 4. Run the winner by the mentor, then lock it. No changing ideas after this.
 5. Define the **one core user flow** that must work. Everything else is a bonus.
 
-| **Criteria** | **Question** | **Idea A** | **Idea B** | **Idea C** |
+| **Criteria** | **Question** | **Idea A** (evacuation center needs board, see founder/idea-a-needs-board/) | **Idea B** | **Idea C** |
 | --- | --- | --- | --- | --- |
 | Impact | Real problem, real users? |  |  |  |
 | Feasibility | Core flow buildable in ~14 hours? |  |  |  |
@@ -281,6 +281,11 @@ Newest information wins. Add a row for every decision.
 
 | **Time** | **Decision** | **Why** |
 | --- | --- | --- |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| Oct 26, triage | Locked the transport idea (working name TransCo) over Idea A (evacuation needs board). | Team pick. Court trial (6 to 0 as first scoped) said lead with the Naga route and fare guide, not payment. |
+| Oct 26, triage | Payment and QR go through third-party services; we never hold or move money ourselves. | Real payment needs a license and per-vehicle devices; beep, GCash and QR Ph already exist. |
+| Oct 26, triage | PUJ GPS tracking: driver accounts share the phone's location; Mapbox (proposed) shows it on the map. Two account types: driver and commuter. | Uses phones drivers already have; no hardware. |
+| Oct 26, triage | Route data: crowdsourced, plus asking LGUs to pinpoint where routes run; stored as our own route list. | Naga's 2025 route plan is only in scanned PDFs. |
+| Oct 26, triage | Name and selling point will be rebranded with the designer. | Pending. |
+| Oct 26, planning | Live updates by polling (driver posts location every 5 to 10 s, commuter map re-fetches every 5 s). | Plain Laravel routes, nothing extra to deploy. |
+| Oct 26, planning | Map provider: Mapbox (react-map-gl). | Map, route lines, live markers, Map Matching for recorded routes. |
+| Oct 26, planning | Work split by feature; the team assigns owners. | Team decision. |

@@ -4,10 +4,11 @@ Team MotoMeetables, Innolab Hackathon 2026 (24-hour build).
 
 ## Read these first
 
-Our plan and rules live in these two files. Follow sections labeled **[AI: FOLLOW]**, use **[AI: REFERENCE]** only when relevant, and ignore **[HUMAN ONLY]**. The Decisions Log in the prep plan is the newest information and wins over anything older.
+Our plan and rules live in these files. Follow sections labeled **[AI: FOLLOW]**, use **[AI: REFERENCE]** only when relevant, and ignore **[HUMAN ONLY]**. The Decisions Log in the prep plan is the newest information and wins over anything older.
 
 @docs/hackathon/prep-plan.md
 @docs/hackathon/skills.md
+@docs/hackathon/tech-stack.md
 
 ---
 
