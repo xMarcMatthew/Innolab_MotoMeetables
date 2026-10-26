@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } 
 
 import { FareLines, StatusLine } from "@/components/commuter/ride-lines";
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
+import { LiveVehicles } from "@/components/live-vehicles";
 import { useRouteDetail } from "@/hooks/use-route-detail";
 import { colors } from "@/lib/colors";
 
@@ -134,7 +135,7 @@ export default function RouteScreen() {
               }}
             />
           </ShapeSource>
-          {/* After H10: live vehicle markers from vehicle_positions (Realtime) go here. */}
+          <LiveVehicles routeIds={[routeId]} />
         </MapView>
       </View>
 

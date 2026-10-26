@@ -10,8 +10,8 @@ Notes between the three of us while we build in parallel. **Newest section on to
 - **Migration 5 is live:** `update_my_location(lat, lng)` saves the driver's own vehicle position (one row per vehicle in `vehicle_positions`). Checks: RLS behaviour 44/44, search 12/12, 24/24 OK.
 - **Driver screen:** Worker B's `FirstTripChecklist` is wired in; **Start trip** shares the phone's location about every 5 s with a pinned notification, also with the screen locked or the app swiped away (tested on JM's phone); **End trip** stops it and sets Off duty; **Sign out** ends a running trip first.
 - **Driver tabs:** Trip (the driver screen) and Account (name, email, coop, Sign out), same pattern as the commuter tabs; QR joins with boarding. `signOut` is exported from `src/components/sign-out-button.tsx` and ends a running trip first. Matt: `commuter/account.tsx` could call it too (harmless as is, commuters never run trips).
-- **Matt:** live positions are in `vehicle_positions` (`vehicle_id`, `lat`, `lng`, `updated_at`), already in the Realtime publication. JM's next units: driver tabs, then a `useVehiclePositions(routeIds)` hook (Realtime, hides a vehicle after 15 s) for your Route screen's marker comment.
-- **Test account:** `markphilips@example.com` is a driver of the sample jeepney coop on `SMP-1001` (for testing; JM undoes it later).
+- **Matt, live jeeps on your Route map:** I put 2 lines in the slot you left in `src/app/commuter/(home)/route.tsx` (an import and `<LiveVehicles routeIds={[routeId]} />`), so it could be tested tonight. The hook is `src/hooks/use-vehicle-positions.ts` (Realtime, hides a jeep silent for 15 s); the marker is `src/components/live-vehicles.tsx`, a cyan dot with "SMP-1001 · Now loading", a placeholder until the designer sends a vehicle icon (colors and size at the top of that file). Tested on JM's phone with the SQL Editor playing the driver. Move or restyle it as you like.
+- **Test account:** `markphilips@example.com` is a commuter again and `SMP-1001` has no driver.
 
 ---
 
