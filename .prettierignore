@@ -1,0 +1,6 @@
+# Team docs and research are hand-formatted; never let the hook rewrite them.
+docs/
+founder/
+.court/
+supabase/
+package-lock.json

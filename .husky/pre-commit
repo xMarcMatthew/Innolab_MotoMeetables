@@ -1,0 +1,2 @@
+# Not "npx lint-staged": npx needs bash, and GitHub Desktop's built-in Git only has sh.
+lint-staged

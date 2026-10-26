@@ -27,7 +27,7 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 
 - **Node 22 LTS** (Expo SDK 56 needs 20.19 or newer)
 - Git, VS Code, an Android phone with our **dev build** installed
-- **EAS CLI** (`npm i -g eas-cli`) and the **Supabase CLI** (run as `npx supabase`, check it works on Windows before the event)
+- **EAS CLI** (`npm i -g eas-cli`) and the **Supabase CLI** (run as `npx supabase`; confirmed working on Windows, version 2.122)
 - **One laptop only:** Android Studio (the Android SDK version Expo's setup guide asks for) + **JDK 17**, as the local build backup
 - No PHP, Composer or local database
 
@@ -37,13 +37,18 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 
 ### Accounts and roles
 - Supabase Auth, **email + password**. **Email confirmation off** for the demo (the built-in email sender is heavily rate-limited; exact limit not checked).
-- `profiles.role`: `commuter`, `driver`, `coop`. Everyone signs up as a commuter. **Users can never change their own role**: driver and coop accounts are seeded or promoted by us (or a later coop RPC), never from the client.
+- `profiles.role`: `commuter`, `driver`, `coop`. Everyone signs up as a commuter. **Users can never change their own role**: driver and coop accounts are seeded or promoted by us (or a later coop RPC), never from the client. Bus operators are coops of type `bus_operator`, created the same way.
+- To promote an account, the integrator runs in the SQL Editor (a driver also needs `coop_id`, so their coop can see and assign them):
+  ```sql
+  update public.profiles set role = 'coop', coop_id = '<coop id>'
+  where id = (select id from auth.users where email = 'someone@example.com');
+  ```
 - Session stored with AsyncStorage. The app holds only the anon (publishable) key.
 - Routes: `src/app/commuter/`, `src/app/driver/`, `src/app/coop/`, plus the sign-in screens. Plain folders, not `(groups)`: groups add no URL segment, so three `(group)/index.tsx` files would all claim `/`. The role picks the home screen; until login works, `src/app/index.tsx` is a temporary role picker.
 
 ### Core flow: destination-first guide (Must-have)
 1. Commuter picks where they want to go, two ways like Google Maps: **search** a place and pick from the result list, or **drop a pin** on the map.
-2. The app matches it to the nearest destination we serve (PostGIS) and shows **what to ride and which terminal to go to**; when several terminals serve it, the nearest to the commuter comes first.
+2. The app matches it to the nearest destination we serve (a PostGIS distance function, still to be written) and shows **what to ride and which terminal to go to**; when several terminals serve it, the nearest to the commuter comes first.
 3. For each option: vehicle type, the vehicles' own fares, the **official fare guide** (regular and discounted), the route line on the map, and which vehicles are **now loading** or **departed**.
 4. **Fares:** each driver sets their own fare on their vehicle. The coop's fare matrix in the `routes` table is the official guide, one row per terminal and destination, **per destination only**. A driver's fare above the guide is labelled "Above the official fare". No in-app report; commuters dispute it themselves using the guide.
 5. **Buses get the full features**, same as jeepneys and tricycles; a bus operator registers as a coop-type account.
@@ -89,14 +94,16 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 
 | Table | Holds | RLS in short |
 | --- | --- | --- |
-| `profiles` | user id (= `auth.uid()`), role, name, coop | read own; update own name only, never role |
+| `profiles` | user id (= `auth.uid()`), role, name, coop | read own; a coop reads its own drivers; update own name only, never role or coop |
 | `coops` | name, type (jeepney coop, TODA, bus) | public read |
-| `terminals` | coop, name, location (PostGIS point) | public read; coop writes own |
-| `routes` | terminal, destination name and point (PostGIS), vehicle type, route line (GeoJSON), official regular fare, official discounted fare | public read; coop writes own |
+| `terminals` | coop, name, `lat`, `lng` | public read; coop writes own |
+| `routes` | terminal, destination name, `destination_lat`, `destination_lng`, vehicle type, route line (GeoJSON), official regular fare, official discounted fare | public read; coop writes own |
 | `vehicles` | coop, plate, vehicle type, route, driver, status, driver's fare, `payment_qr` | public read; coop writes own; status and fare changes by the driver via RPC |
 | `vehicle_tokens` | vehicle, `board_token` | its own table because RLS hides rows, not columns; only that vehicle's driver reads it; `board_vehicle` reads it |
-| `vehicle_positions` | vehicle (one row each), location, updated_at | public read; writes only through `update_my_location` |
-| `boardings` | commuter, vehicle, boarded_at | commuter reads own; driver reads count for own vehicle; insert only through `board_vehicle` |
+| `vehicle_positions` | vehicle (one row each), `lat`, `lng`, updated_at | public read; writes only through `update_my_location` |
+| `boardings` | commuter, vehicle (kept as empty if the vehicle is deleted, so trip history survives), boarded_at | commuter reads own; driver reads count for own vehicle; insert only through `board_vehicle` |
+
+Locations are plain `lat`/`lng` numbers (with range checks), not PostGIS columns: the API and Realtime return PostGIS columns as hex the app cannot plot. PostGIS is used only inside functions that measure distance. "Logged-in users" means any signed-in account; logged-out users can read nothing. Migration 1 (`supabase/migrations/20261026150545_init_schema.sql`) creates all tables above plus `set_vehicle_status` and `set_my_fare`; `push_tokens`, `update_my_location`, `board_vehicle` and the nearest-destination function come in later migrations. When `board_vehicle` lands, add `role = 'driver'` to the `vehicle_tokens` read rule (security review note).
 | `push_tokens` (after H10) | user, Expo push token | user reads and writes own |
 
 ## Security model (non-negotiable)
@@ -146,13 +153,13 @@ App code lives under `src/` (the SDK 56 template's layout); import it as `@/...`
 **Team**
 - Work is split by feature, not frontend and backend. Each person owns whole role screens end to end.
 - Integrator: **JM**. Merges, runs `db push`, function deploys, the RLS check and EAS builds.
-- Docs: the Decisions Log in `prep-plan.md` and the feature table in its section 1. No per-tab handoffs for the 24 hours.
+- Docs: the Decisions Log in `prep-plan.md`, the feature table in its section 1, and one shared `handoff.md` (newest section on top, a short section per person before each sleep shift).
 
 ## Before building, check
 
 1. The first **EAS dev build** works and installs on all three phones. Do this first: nobody can test the driver flow without it.
 2. Mapbox account and public token; follow the rnmapbox Expo install guide for any extra token it asks for (not checked).
-3. Supabase project in Singapore, **PostGIS enabled**, email confirmation off, CLI linked on the integrator's laptop.
+3. ~~Supabase project in Singapore, PostGIS enabled, email confirmation off, CLI linked on the integrator's laptop.~~ Done Oct 26: migration 1 pushed; live checks 22/22 OK and 31/31 PASS.
 4. Background location on a real Android phone with the screen off, early.
 5. Confirmed jeepney fares from the coop.
 

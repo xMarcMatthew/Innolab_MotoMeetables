@@ -9,6 +9,7 @@ Our plan and rules live in these files. Follow sections labeled **[AI: FOLLOW]**
 @docs/hackathon/prep-plan.md
 @docs/hackathon/skills.md
 @docs/hackathon/tech-stack.md
+@docs/hackathon/handoff.md
 
 ---
 
