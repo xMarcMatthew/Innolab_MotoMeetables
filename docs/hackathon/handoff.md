@@ -4,6 +4,17 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (later), JM → Matt and Rj: login works
+
+- **Pull, then `npm install`.** New packages are JS only (Supabase client, react-hook-form, Zod), **no rebuild**.
+- The app now opens on **Sign in**. Create an account in the app; it is a commuter. For a driver or coop account, tell JM the email.
+- After sign-in you land on your role's home. The role picker is gone. Each placeholder home has a **Sign out** button; keep it somewhere on your real screen.
+- In your code: `import { supabase } from "@/lib/supabase"`. Your screens can assume a signed-in user. Your own id is `(await supabase.auth.getSession()).data.session.user.id`, for filtering reads only; never send it for writes.
+- Form rules go in `src/lib/validation.ts` (Zod). `src/components/auth/form-field.tsx` is a labelled input with its error message, reusable in any react-hook-form form.
+- Use **Node 22**: on Node 20, pressing `w` (web) crashes. The phone works on both.
+
+---
+
 ## Oct 27, JM (integrator) → Matt and Rj
 
 ### Done and pushed

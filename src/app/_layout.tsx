@@ -1,11 +1,44 @@
 import "../global.css";
 
-import { Link, Stack } from "expo-router";
+import type { Session } from "@supabase/supabase-js";
+import { Link, SplashScreen, Stack } from "expo-router";
 import { cssInterop } from "nativewind";
+import { useEffect, useState } from "react";
+
+import { supabase } from "@/lib/supabase";
 
 // NativeWind only styles core components on native; without this, className on Link works on web but not on the phone.
 cssInterop(Link, { className: "style" });
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
-  return <Stack />;
+  // undefined = still reading the saved session.
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+
+  useEffect(() => {
+    // Fires INITIAL_SESSION first, then every sign-in, sign-out and token refresh.
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session !== undefined) SplashScreen.hide();
+  }, [session]);
+
+  // The splash covers the screen until the session is known. Signing out flips the guards, so the router moves to sign-in by itself.
+  return (
+    <Stack>
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="commuter/index" />
+        <Stack.Screen name="driver/index" />
+        <Stack.Screen name="coop/index" />
+      </Stack.Protected>
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
+        <Stack.Screen name="(auth)/sign-up" options={{ title: "Create account" }} />
+      </Stack.Protected>
+    </Stack>
+  );
 }
