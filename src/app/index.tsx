@@ -1,8 +1,9 @@
-import { Redirect } from "expo-router";
+import { type Href, Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { SignOutButton } from "@/components/sign-out-button";
+import { getWantsDriver, setWantsDriver } from "@/lib/onboarding";
 import { supabase } from "@/lib/supabase";
 
 const HOMES = { commuter: "/commuter", driver: "/driver", coop: "/coop" } as const;
@@ -10,7 +11,7 @@ type Role = keyof typeof HOMES;
 
 // Signed-in users land here; send them to their role's home.
 export default function Index() {
-  const [role, setRole] = useState<Role | null>(null);
+  const [target, setTarget] = useState<Href | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -24,13 +25,17 @@ export default function Index() {
         .select("role")
         .eq("id", auth.session.user.id)
         .single();
-      if (error) setError(error.message);
-      else if (data.role in HOMES) setRole(data.role as Role);
-      else setError(`Unknown role: ${data.role}`);
+      if (error) return setError(error.message);
+      if (!(data.role in HOMES)) return setError(`Unknown role: ${data.role}`);
+      const role = data.role as Role;
+      // A driver sign-up stays a commuter until the coop promotes it (Decisions D2).
+      const wantsDriver = await getWantsDriver();
+      if (role !== "commuter" && wantsDriver) await setWantsDriver(false);
+      setTarget(role === "commuter" && wantsDriver ? "/waiting" : HOMES[role]);
     })();
   }, [attempt]);
 
-  if (role) return <Redirect href={HOMES[role]} />;
+  if (target) return <Redirect href={target} />;
 
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-background p-6">

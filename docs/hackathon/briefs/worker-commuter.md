@@ -66,3 +66,18 @@ You are building the commuter screens of **Larga**, a Naga City terminal commute
 
 ## Report
 (append here when done)
+
+**Worker A, Oct 27.** `npx tsc --noEmit` exit 0, `npm run lint` clean, Prettier applied to my files. No packages, no commits.
+- **Built:** Home (terminal dots fitted to the map, "Where to?" name search, Drop a pin with `PinPicker`, Near me, location dot once permission exists), Options (one card per `nearest_routes` row in its own order), Route (line, terminal and destination dots, Go to terminal `geo:` link, disabled Scan to board and Pay with a "Coming soon" caption). API bodies in `commuter.ts` plus a new `listTerminals`; hooks `use-destinations`, `use-ride-options`, `use-route-detail`; shared `components/commuter/ride-lines.tsx` (status and fare lines) and `my-location.ts` (one-sentence Alert, then Android's prompt).
+- **Nothing is mocked.** The skeleton had no mock loader, so there is no fallback: with no network you get the error state and Try again.
+- **Not verified:** nothing has run on a phone or against the live database (this shell has no signed-in session, and I did not create a test account). Check: the search lists names, a Pacol pin lists rides, a loading vehicle's fare shows, the Route camera fits the line, and Go to terminal opens Maps.
+- **Brief conflicts, my choice:** (1) Home sends `lat`, `lng`, `label` to Options, not `destination`, because Options reads those. (2) With location denied I keep the database's order (drop distance), not terminal name, because the brief also says "do not re-sort". (3) `getRouteDetail` needs the pin, so Route gets `routeId, lat, lng` plus `myLat, myLng` when known.
+- **Choices:** rows over 2 km are dropped in `listRideOptions`; if every row is dropped, the screen says "No terminal serves that spot yet" (pin) or "No rides to X yet" (name). With several loading vehicles, the card shows the highest driver fare, so "Above the official fare" is never hidden. Options asks for location once per app run; Near me always asks. The destination dot is the last point of the line (the seed's convention); a route with no line centres on its terminal.
+- **For JM:** the Sign out link left Home, because the Account tab has one. `my-location.ts` is not a component; it sits under `components/commuter/` only because that is my folder, so `src/lib/` would suit it better. `data/routes/*.json` is no longer imported by the app. The comment at the top of `commuter.ts` ("Worker A fills the function bodies") is now out of date.
+
+### Integrator review (Matt's chat)
+- Reviewed with ponytail-review: data flow Home → Options → Route traced, `nearest_routes` call matches migration 4, reads only, pin and name search share one path, every status and fare is a text label. No must-fix findings.
+- Applied Worker A's own two notes: `my-location.ts` moved to `src/lib/` (it is not a component) and the stale skeleton comment at the top of `commuter.ts` replaced.
+- Left as is: `Mapbox.setAccessToken` is called in three files (Home, Route, PinPicker); harmless, could live once in the root layout later.
+- `npx tsc --noEmit` exit 0 and lint clean. **JM: this unit is ready to commit** as `feat(commuter): add destination search, ride options and route screens`. Phone checks for Matt: search lists names, a Pacol pin lists rides, a loading vehicle's fare shows, the Route camera fits the line, Go to terminal opens Maps.
+- JM (Oct 27): the disabled Scan to board and Pay buttons and the "Coming soon" caption were removed from Route (team rule: no "coming soon" copy); a comment marks where they go after H10.

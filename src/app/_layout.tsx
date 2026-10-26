@@ -44,7 +44,7 @@ export default function RootLayout() {
       <Stack.Protected guard={!session}>
         {/* Welcome is first so logged-out users land on it, not on Sign in. */}
         <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/driver" options={{ title: "Driving for a coop" }} />
+        <Stack.Screen name="(auth)/for-drivers" options={{ title: "Driving for a coop" }} />
         <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
         <Stack.Screen name="(auth)/sign-up" options={{ title: "Create account" }} />
       </Stack.Protected>

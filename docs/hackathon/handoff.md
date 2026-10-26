@@ -4,6 +4,25 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (night), Matt → JM and Rj: nap plan, worker chats running, geocoding verdict
+
+- **Plan and file ownership:** `docs/hackathon/plan-matt-nap.md`. Decisions D1 to D5 (no anonymous sessions; driver wait via a local flag; full name stored, "Marc B." shown to others; three tabs per role; Go to terminal opens the phone's maps app). Two Opus worker chats are building from `docs/hackathon/briefs/`: Worker A the commuter Home, Options and Route screens against `nearest_routes` and the seed; Worker B the Welcome and driver screens, the Waiting screen, the Trips and Account tabs, and a `FirstTripChecklist` component. **Please do not edit the files in the ownership table until the nap ends.** Matt's chat reviews their diffs, runs tsc and lint, and leaves the changes uncommitted for JM.
+- **Skeleton is pushed:** commuter tabs (`src/app/commuter/_layout.tsx`, Home is the `(home)` stack), `src/lib/api/commuter.ts` types, `src/lib/names.ts` (`shortName`), `src/lib/colors.ts` (Palette A hex for Mapbox layers and tab tint), placeholder screens, and the root layout entries `commuter`, `waiting`, `(auth)/welcome`, `(auth)/for-drivers`. One JS package added: `@expo/vector-icons`, no rebuild.
+- **Mapbox style URL is set** in Matt's `.env` and the map renders it on the phone. JM: ask Matt for the URL if your `.env` still has the placeholder.
+- **Geocoding check (Mapbox Geocoding v6, proximity Naga):** barangays and streets resolve ("Pacol" → the barangay, "Panganiban Drive"), landmarks do not ("SM City Naga" returns only a road, "Ateneo de Naga" nothing, "People's Mall" lands in Bacolod). **Decision:** no place search in the Must-have; the commuter searches our own destination names or drops a pin. Barangay-name geocoding is a possible Satisfier. The Search Box API (points of interest) was not checked.
+- **`nearest_routes` is exactly what the commuter screens needed**, thanks. Worker A calls it with the destination's point for a name search and with the pin otherwise, then reads vehicles and `route_line` separately as you described.
+
+### JM
+- When Worker B reports done, its Report in `briefs/worker-onboarding.md` has the two lines to add `FirstTripChecklist` to `driver/index.tsx`.
+- Suggested driver tabs (`driver/_layout.tsx`: Trip, QR, Account) are in the plan; the commuter tabs layout is the pattern to copy.
+- `npx tsc` TS2882 on `global.css`: it clears once `npx expo start` has generated `expo-env.d.ts` (it references `expo/types`, which declares `*.css`). Rj's error is a fresh checkout that has not started Metro yet; no code change needed.
+
+### Rj
+- Terminal and destination names in `data/routes/*.json` are the ones Matt uses on the map: Pacol Terminal (Centro) / (Pacol) / (Ateneo Turn); San Felipe Terminal (Centro) / (Pacol Boundary) / (Megaprime) / (7-Eleven); Carolina Terminal (Centro) / (Carolina); Panicuason Terminal (Centro) / (Panicuason). If your seed used different spellings, either is fine, but tell Matt which so the demo script matches.
+- "Centro" is a different point per route file, because each line loads at a different Centro spot. That is intended.
+
+---
+
 ## Oct 27 (later), JM → Matt and Rj: Naga seed loaded, search fix (migration 4)
 
 - **Rj's seed is in the live database:** 2 sample coops (jeepney coop `b6ee27cb-34ef-53a9-90f2-18804abddbe5`, tricycle TODA `c9a516b2-c5aa-5668-ab80-6e68d988b3d9`), 12 terminals, 19 routes (traditional and modern rows), 6 vehicles (off duty, no driver).
