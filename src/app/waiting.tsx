@@ -1,8 +1,11 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SignOutButton } from "@/components/sign-out-button";
+import { Button } from "@/components/ui/button";
+import { colors } from "@/lib/colors";
 import { setWantsDriver } from "@/lib/onboarding";
 import { supabase } from "@/lib/supabase";
 
@@ -39,14 +42,15 @@ export default function WaitingScreen() {
   }
 
   return (
-    <View className="flex-1 justify-center gap-6 bg-background p-6">
+    // The stack header covers the top; only the bottom inset is ours.
+    <SafeAreaView edges={["bottom"]} className="flex-1 justify-center gap-6 bg-background p-6">
       <View className="gap-2">
         {email ? (
           <Text selectable className="text-2xl font-semibold text-foreground">
             {email}
           </Text>
         ) : (
-          <ActivityIndicator />
+          <ActivityIndicator size="large" color={colors.primary} />
         )}
         <Text className="text-muted">
           Give this email to your coop. When they assign you a vehicle, tap Check again.
@@ -58,31 +62,24 @@ export default function WaitingScreen() {
         </Text>
       )}
       <View className="gap-3">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: checking }}
-          disabled={checking}
+        <Button
+          label="Check again"
+          loading={checking}
+          loadingLabel="Checking..."
           onPress={checkAgain}
-          className="min-h-12 items-center justify-center rounded-lg bg-primary active:opacity-80"
-        >
-          <Text className="font-semibold text-white">
-            {checking ? "Checking..." : "Check again"}
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+        />
+        <Button
+          label="I'm a commuter instead"
+          variant="outline"
           onPress={async () => {
             await setWantsDriver(false);
             router.replace("/commuter");
           }}
-          className="min-h-12 items-center justify-center rounded-lg border border-muted bg-white active:opacity-80"
-        >
-          <Text className="font-semibold text-foreground">I&apos;m a commuter instead</Text>
-        </Pressable>
+        />
       </View>
       <View className="items-center">
         <SignOutButton />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

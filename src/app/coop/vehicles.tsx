@@ -1,8 +1,13 @@
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 
 import { Chips, VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import { useMyVehicles } from "@/hooks/use-my-vehicles";
 import { setVehicleStatusAsCoop, type VehicleStatus } from "@/lib/api/coop";
 import { VEHICLE_STATUSES } from "@/lib/validation";
@@ -40,35 +45,43 @@ export default function Vehicles() {
     }
   }
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="gap-4 p-6">
+      {/* The header carries the title. */}
       <Stack.Screen options={{ title: "Vehicles" }} />
-      <Text className="text-2xl font-bold text-foreground">Vehicles</Text>
 
-      {error && (
-        <View className="gap-2">
-          <Text className="text-destructive">{error}</Text>
-          <Pressable accessibilityRole="button" onPress={reload}>
-            <Text className="font-semibold text-primary">Try again</Text>
-          </Pressable>
-        </View>
-      )}
+      {error && <ErrorState message={error} onRetry={reload} />}
 
-      {!error && vehicles.length === 0 && <Text className="text-muted">No vehicles yet</Text>}
+      {!error && vehicles.length === 0 && <EmptyState icon="bus-side" message="No vehicles yet" />}
 
       {vehicles.map((v) => (
-        <View key={v.id} className="gap-3 rounded-lg border border-border bg-white p-4">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${v.plate}`}
+        <Card key={v.id}>
+          <Text className="text-lg font-semibold text-foreground">
+            {v.plate} · {VEHICLE_TYPE_LABELS[v.vehicle_type]}
+          </Text>
+          <Text className="text-muted">
+            {v.route ? `${v.route.terminal.name} → ${v.route.destination_name}` : "No route"}
+          </Text>
+          <Text className="text-muted">
+            {v.driver_id ? (v.driver?.full_name ?? "Unnamed driver") : "No driver"}
+          </Text>
+          <Text className="font-medium text-foreground">Status: {STATUS_LABELS[v.status]}</Text>
+          <Text className="text-muted">
+            Payment QR:{" "}
+            {v.payment_qr ? (v.payment_qr_by_driver ? "set by driver" : "set by coop") : "none"}
+          </Text>
+          <Chips
+            options={STATUS_OPTIONS}
+            value={v.status}
+            onChange={(s) => onStatus(v.id, s)}
+            disabled={busyId === v.id}
+          />
+          <Button
+            label="Edit ›"
+            variant="link"
+            className="self-start"
             onPress={() =>
               router.push({
                 pathname: "/coop/vehicle",
@@ -81,41 +94,13 @@ export default function Vehicles() {
                 },
               })
             }
-            className="gap-1"
-          >
-            <Text className="text-lg font-semibold text-foreground">
-              {v.plate} · {VEHICLE_TYPE_LABELS[v.vehicle_type]}
-            </Text>
-            <Text className="text-muted">
-              {v.route ? `${v.route.terminal.name} → ${v.route.destination_name}` : "No route"}
-            </Text>
-            <Text className="text-muted">
-              {v.driver_id ? (v.driver?.full_name ?? "Unnamed driver") : "No driver"}
-            </Text>
-            <Text className="font-medium text-foreground">Status: {STATUS_LABELS[v.status]}</Text>
-            <Text className="text-muted">
-              Payment QR:{" "}
-              {v.payment_qr ? (v.payment_qr_by_driver ? "set by driver" : "set by coop") : "none"}
-            </Text>
-          </Pressable>
-          <Chips
-            options={STATUS_OPTIONS}
-            value={v.status}
-            onChange={(s) => onStatus(v.id, s)}
-            disabled={busyId === v.id}
           />
-        </View>
+        </Card>
       ))}
 
       {actionError && <Text className="text-destructive">{actionError}</Text>}
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push("/coop/vehicle")}
-        className="items-center rounded-lg bg-primary py-3"
-      >
-        <Text className="font-semibold text-white">Add vehicle</Text>
-      </Pressable>
+      <Button label="Add vehicle" onPress={() => router.push("/coop/vehicle")} />
     </ScrollView>
   );
 }

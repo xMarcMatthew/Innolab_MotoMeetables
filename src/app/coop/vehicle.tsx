@@ -2,10 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { VEHICLE_TYPE_LABELS, VehicleTypeChips } from "@/components/coop/vehicle-type-chips";
 import { FormField } from "@/components/form-field";
+import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   createVehicle,
   type CoopRoute,
@@ -36,20 +38,22 @@ function PickList({
   return (
     <View className="gap-2">
       <Text className="font-medium text-foreground">{label}</Text>
-      {[{ id: null, label: "None" }, ...options].map((o) => (
-        <Pressable
-          key={o.id ?? "none"}
-          accessibilityRole="button"
-          accessibilityState={{ selected: o.id === value }}
-          onPress={() => onChange(o.id)}
-          className={`flex-row items-center justify-between rounded-lg border px-3 py-3 ${
-            o.id === value ? "border-primary bg-white" : "border-muted bg-white"
-          }`}
-        >
-          <Text className="flex-1 text-foreground">{o.label}</Text>
-          {o.id === value && <Text className="font-semibold text-primary">Selected</Text>}
-        </Pressable>
-      ))}
+      <ScrollView nestedScrollEnabled className="max-h-64" contentContainerClassName="gap-2">
+        {[{ id: null, label: "None" }, ...options].map((o) => (
+          <Pressable
+            key={o.id ?? "none"}
+            accessibilityRole="button"
+            accessibilityState={{ selected: o.id === value }}
+            onPress={() => onChange(o.id)}
+            className={`min-h-12 flex-row items-center justify-between rounded-lg bg-white px-3 py-3 active:opacity-80 ${
+              o.id === value ? "border-2 border-primary" : "border border-muted"
+            }`}
+          >
+            <Text className="flex-1 text-foreground">{o.label}</Text>
+            {o.id === value && <Text className="font-semibold text-primary">Selected</Text>}
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -113,13 +117,7 @@ export default function VehicleScreen() {
     }
   });
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <ScrollView
@@ -165,14 +163,7 @@ export default function VehicleScreen() {
 
       {saveError && <Text className="text-destructive">{saveError}</Text>}
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={busy}
-        onPress={onSave}
-        className="items-center rounded-lg bg-primary py-3"
-      >
-        <Text className="font-semibold text-white">{busy ? "Saving..." : "Save vehicle"}</Text>
-      </Pressable>
+      <Button label="Save vehicle" loading={busy} loadingLabel="Saving..." onPress={onSave} />
     </ScrollView>
   );
 }

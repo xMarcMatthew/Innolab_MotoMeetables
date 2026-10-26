@@ -1,6 +1,8 @@
 import { type Href, router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "@/components/ui/button";
 import { setWantsDriver } from "@/lib/onboarding";
 
 // The flag makes index.tsx send a still-commuter account to Waiting instead of commuter Home.
@@ -11,7 +13,8 @@ async function go(href: Href) {
 
 export default function DriverExplainerScreen() {
   return (
-    <View className="flex-1 gap-6 bg-background p-6">
+    // The stack header covers the top; only the bottom inset is ours.
+    <SafeAreaView edges={["bottom"]} className="flex-1 gap-6 bg-background p-6">
       <View className="gap-2">
         <Text className="text-2xl font-bold text-foreground">Driving for a coop?</Text>
         <Text className="text-muted">
@@ -20,21 +23,9 @@ export default function DriverExplainerScreen() {
         </Text>
       </View>
       <View className="gap-3">
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => go("/sign-up")}
-          className="min-h-12 items-center justify-center rounded-lg bg-primary active:opacity-80"
-        >
-          <Text className="font-semibold text-white">Create account</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => go("/sign-in")}
-          className="min-h-12 items-center justify-center rounded-lg border border-muted bg-white active:opacity-80"
-        >
-          <Text className="font-semibold text-foreground">Sign in</Text>
-        </Pressable>
+        <Button label="Create account" onPress={() => go("/sign-up")} />
+        <Button label="Sign in" variant="outline" onPress={() => go("/sign-in")} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

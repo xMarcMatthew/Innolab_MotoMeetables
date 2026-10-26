@@ -1,6 +1,8 @@
 import Mapbox, { Camera, CircleLayer, MapView, ShapeSource } from "@rnmapbox/maps";
 import { View } from "react-native";
 
+import { colors } from "@/lib/colors";
+
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
 
 // Naga City centre, [lng, lat]
@@ -39,13 +41,13 @@ export function PinPicker({ pin, onPick }: Props) {
               geometry: { type: "Point", coordinates: [pin.lng, pin.lat] },
             }}
           >
-            {/* Map layers take raw colors: accent from tailwind.config.js */}
+            {/* Map layers take raw colors from src/lib/colors.ts */}
             <CircleLayer
               id="pin-circle"
               style={{
-                circleColor: "#EA580C",
+                circleColor: colors.accent,
                 circleRadius: 9,
-                circleStrokeColor: "#FFFFFF",
+                circleStrokeColor: colors.white,
                 circleStrokeWidth: 3,
               }}
             />

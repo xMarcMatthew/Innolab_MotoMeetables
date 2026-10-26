@@ -10,7 +10,7 @@ export default function DriverTabs() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: "#FFFFFF", borderTopColor: colors.border },
+        tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.border },
       }}
     >
       <Tabs.Screen
