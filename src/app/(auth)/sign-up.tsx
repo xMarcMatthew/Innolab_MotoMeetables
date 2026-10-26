@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Pressable, ScrollView, Text } from "react-native";
 
-import { FormField } from "@/components/auth/form-field";
+import { FormField } from "@/components/form-field";
 import { supabase } from "@/lib/supabase";
 import { type SignUp, signUpSchema } from "@/lib/validation";
 
