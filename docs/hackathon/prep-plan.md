@@ -56,9 +56,9 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 
 | **Feature** | **Owner** | **Status** |
 | --- | --- | --- |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| Foundation: Expo scaffold, EAS dev build on all three phones, Supabase project (PostGIS, auth, profiles and roles), all migrations and RLS, RLS check. Then driver screens (start and end trip, now loading or departed); after H10, background location and Realtime positions. **Integrator.** | JM (Reantazo) | Not started |
+| Commuter screens: terminal picker (nearest by GPS), destination list, fare card, Mapbox map with route line and vehicle markers; Mapbox Studio style; jeepney route lines for Naga. After H10: boarding QR scan with the 100 m check, Pay screen with the coop's QR. Designer liaison and pitch deck. | Matt (Bagasbas) | Started: Mapbox style and the Pacol to Centro route |
+| Coop screens: terminals with pin picker, routes and fares, vehicles and driver assignment. Seed Naga terminal and fare data (photos of real fare matrices). After H10: push notifications, QR Ph entry by scanning the coop's printed code. | Rj (Mendoza) | Not started |
 
 ## 2. Tech Stack and Starter Kit [AI: REFERENCE]
 

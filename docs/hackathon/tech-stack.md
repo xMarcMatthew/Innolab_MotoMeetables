@@ -142,7 +142,7 @@ Data flows screen → hook → `lib/api/<feature>.ts` → Supabase (a table quer
 
 **Team**
 - Work is split by feature, not frontend and backend. Each person owns whole role screens end to end.
-- Integrator: **[INTEGRATOR: NAME NEEDED]**. Merges, runs `db push`, function deploys, the RLS check and EAS builds.
+- Integrator: **JM**. Merges, runs `db push`, function deploys, the RLS check and EAS builds.
 - Docs: the Decisions Log in `prep-plan.md` and the feature table in its section 1. No per-tab handoffs for the 24 hours.
 
 ## Before building, check
