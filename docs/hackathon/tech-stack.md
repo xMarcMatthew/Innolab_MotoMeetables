@@ -41,12 +41,14 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
 - Session stored with AsyncStorage. The app holds only the anon (publishable) key.
 - Routes: `src/app/commuter/`, `src/app/driver/`, `src/app/coop/`, plus the sign-in screens. Plain folders, not `(groups)`: groups add no URL segment, so three `(group)/index.tsx` files would all claim `/`. The role picks the home screen; until login works, `src/app/index.tsx` is a temporary role picker.
 
-### Core flow: terminal and fare guide (Must-have)
-1. Commuter picks a terminal (list, or nearest by GPS through PostGIS) and a destination.
-2. App shows the vehicle type, the fare from the **fare matrix** (regular and discounted), the route line on the map, and which vehicles are **now loading** or **departed**.
-3. Fares come from the `routes` table, one row per terminal and destination. **Per destination only**, no drop-off points along the way.
-4. **Buses are info only** (terminal and fare); bus lines already sell tickets online.
-5. Fare values: Naga tricycles per City Ord. 2024-002; jeepney fares still **need confirming** with the coop or LTFRB Region V.
+### Core flow: destination-first guide (Must-have)
+1. Commuter picks where they want to go, two ways like Google Maps: **search** a place and pick from the result list, or **drop a pin** on the map.
+2. The app matches it to the nearest destination we serve (PostGIS) and shows **what to ride and which terminal to go to**; when several terminals serve it, the nearest to the commuter comes first.
+3. For each option: vehicle type, the vehicles' own fares, the **official fare guide** (regular and discounted), the route line on the map, and which vehicles are **now loading** or **departed**.
+4. **Fares:** each driver sets their own fare on their vehicle. The coop's fare matrix in the `routes` table is the official guide, one row per terminal and destination, **per destination only**. A driver's fare above the guide is labelled "Above the official fare". No in-app report; commuters dispute it themselves using the guide.
+5. **Buses get the full features**, same as jeepneys and tricycles; a bus operator registers as a coop-type account.
+6. Place search: Mapbox Search/Geocoding API (not checked yet: free tier and how well it knows Naga places; fallback is searching our own destination names).
+7. Fare guide values: Naga tricycles per City Ord. 2024-002; jeepney fares still **need confirming** with the coop or LTFRB Region V.
 
 ### Coop screens (Must-have)
 - Coop users edit their terminals, routes and fares, and vehicles, inside the app.
@@ -90,8 +92,8 @@ Limit to say in the pitch: tracking runs while the driver's app keeps its foregr
 | `profiles` | user id (= `auth.uid()`), role, name, coop | read own; update own name only, never role |
 | `coops` | name, type (jeepney coop, TODA, bus) | public read |
 | `terminals` | coop, name, location (PostGIS point) | public read; coop writes own |
-| `routes` | terminal, destination, vehicle type, route line (GeoJSON), regular fare, discounted fare | public read; coop writes own |
-| `vehicles` | coop, plate, vehicle type, route, driver, status, `payment_qr` | public read; coop writes own; status changes via RPC |
+| `routes` | terminal, destination name and point (PostGIS), vehicle type, route line (GeoJSON), official regular fare, official discounted fare | public read; coop writes own |
+| `vehicles` | coop, plate, vehicle type, route, driver, status, driver's fare, `payment_qr` | public read; coop writes own; status and fare changes by the driver via RPC |
 | `vehicle_tokens` | vehicle, `board_token` | its own table because RLS hides rows, not columns; only that vehicle's driver reads it; `board_vehicle` reads it |
 | `vehicle_positions` | vehicle (one row each), location, updated_at | public read; writes only through `update_my_location` |
 | `boardings` | commuter, vehicle, boarded_at | commuter reads own; driver reads count for own vehicle; insert only through `board_vehicle` |
