@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { VEHICLE_TYPE_LABELS, VehicleTypeChips } from "@/components/coop/vehicle-type-chips";
+import { VehiclePaymentQr } from "@/components/coop/vehicle-payment-qr";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -12,8 +13,10 @@ import {
   createVehicle,
   type CoopRoute,
   type Driver,
+  getVehiclePaymentQr,
   listMyDrivers,
   listMyRoutes,
+  setVehiclePaymentQr,
   updateVehicle,
   type VehicleType,
 } from "@/lib/api/coop";
@@ -76,6 +79,10 @@ export default function VehicleScreen() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [qr, setQr] = useState<{ payment_qr: string | null; payment_qr_by_driver: boolean }>({
+    payment_qr: null,
+    payment_qr_by_driver: false,
+  });
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { control, handleSubmit } = useForm<{ plate: string }>({
@@ -84,14 +91,19 @@ export default function VehicleScreen() {
   });
 
   useEffect(() => {
-    Promise.all([listMyRoutes(), listMyDrivers()])
-      .then(([r, d]) => {
+    Promise.all([
+      listMyRoutes(),
+      listMyDrivers(),
+      params.id ? getVehiclePaymentQr(params.id) : null,
+    ])
+      .then(([r, d, q]) => {
         setRoutes(r);
         setDrivers(d);
+        if (q) setQr(q);
       })
       .catch((e: Error) => setLoadError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [params.id]);
 
   const onSave = handleSubmit(async ({ plate }) => {
     setSaveError(null);
@@ -116,6 +128,17 @@ export default function VehicleScreen() {
       setBusy(false);
     }
   });
+
+  // Saved straight away, like the driver's screen; the coop's own save is never "by driver".
+  async function onSaveQr(next: string | null) {
+    setSaveError(null);
+    try {
+      await setVehiclePaymentQr(params.id!, next);
+      setQr({ payment_qr: next, payment_qr_by_driver: false });
+    } catch (e) {
+      setSaveError((e as Error).message);
+    }
+  }
 
   if (loading) return <LoadingState />;
 
@@ -159,6 +182,10 @@ export default function VehicleScreen() {
       />
       {drivers.length === 0 && !loadError && (
         <Text className="text-muted">No drivers in your coop yet. Ask JM to add them.</Text>
+      )}
+
+      {editing && (
+        <VehiclePaymentQr qr={qr.payment_qr} byDriver={qr.payment_qr_by_driver} onSave={onSaveQr} />
       )}
 
       {saveError && <Text className="text-destructive">{saveError}</Text>}

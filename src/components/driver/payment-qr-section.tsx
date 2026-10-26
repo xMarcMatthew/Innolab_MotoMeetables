@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
 
-import { PaymentQrScanner } from "@/components/driver/payment-qr-scanner";
+import { PaymentQrScanner } from "@/components/payment-qr-scanner";
+import { PaymentQrView } from "@/components/payment-qr-view";
 import { Button } from "@/components/ui/button";
 import { useSavedFlash } from "@/hooks/use-saved-flash";
 
@@ -37,10 +37,7 @@ export function PaymentQrSection({
         <PaymentQrScanner onScanned={save} onCancel={() => setMode("idle")} />
       ) : mode === "show" && qr ? (
         <View className="gap-3">
-          {/* Black on white so wallet apps can scan it. */}
-          <View className="items-center rounded-lg border border-border bg-white p-4">
-            <QRCode value={qr} size={280} color="black" backgroundColor="white" />
-          </View>
+          <PaymentQrView qr={qr} />
           <Text className="text-muted">
             Scan with GCash, Maya or your bank app. Enter{" "}
             {fare !== null ? `₱${fare.toFixed(2)}` : "the fare"} yourself.
