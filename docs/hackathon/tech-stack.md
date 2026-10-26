@@ -44,7 +44,7 @@ This replaces the earlier Laravel + Inertia web proposal. We reuse setup knowled
   where id = (select id from auth.users where email = 'someone@example.com');
   ```
 - Session stored with AsyncStorage. The app holds only the anon (publishable) key.
-- Routes: `src/app/commuter/`, `src/app/driver/`, `src/app/coop/`, plus the sign-in screens. Plain folders, not `(groups)`: groups add no URL segment, so three `(group)/index.tsx` files would all claim `/`. The role picks the home screen; until login works, `src/app/index.tsx` is a temporary role picker.
+- Routes: `src/app/commuter/`, `src/app/driver/`, `src/app/coop/`, plus the sign-in screens. Plain folders, not `(groups)`: groups add no URL segment, so three `(group)/index.tsx` files would all claim `/`. Sign-in and sign-up live in `src/app/(auth)/`. `Stack.Protected` in `src/app/_layout.tsx` sends logged-out users there, and `src/app/index.tsx` redirects a signed-in user to their role's home by `profiles.role`.
 
 ### Core flow: destination-first guide (Must-have)
 1. Commuter picks where they want to go, two ways like Google Maps: **search** a place and pick from the result list, or **drop a pin** on the map.

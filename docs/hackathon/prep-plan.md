@@ -45,7 +45,7 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 | **Must-have features** | See section 3.3. |
 | **Web or mobile** | Android APK (Expo dev build, EAS Build) |
 | **Backend** | Supabase only, no custom server (see tech-stack.md) |
-| **Current hour / phase** | Scaffold, NativeWind + Palette A, all native modules, `eas.json` and the lint hook are in; **the first EAS dev build works on JM's phone** (role picker, live reload, Camera/Location "Allow all the time"/Notifications permissions all checked). Team notes in `handoff.md`. **Supabase migration 1 is live** (all tables, RLS, driver status and fare functions; checks pass on the live database). Next (JM): login and roles in the app. Matt and Rj: pull, follow the setup in `handoff.md` (install the dev build on your phone), then Matt the commuter screens and Rj the seed data (A/B fare question first). |
+| **Current hour / phase** | Scaffold, NativeWind + Palette A, all native modules, `eas.json` and the lint hook are in; **the first EAS dev build works on JM's phone** (live reload, Camera/Location "Allow all the time"/Notifications permissions all checked). Team notes in `handoff.md`. **Supabase migration 1 is live** (all tables, RLS, driver status and fare functions; checks pass on the live database). **Login works** on JM's phone (sign-up, sign-in, sign-out, session kept after restart, redirect by `profiles.role`). Next (JM): driver screens. Matt and Rj: pull, follow the setup in `handoff.md` (install the dev build on your phone), then Matt the commuter screens and Rj the seed data (A/B fare question first). |
 
 ## 1. How We Work [AI: REFERENCE]
 
@@ -56,7 +56,7 @@ This file is our team's source of truth for Innolab Hackathon 2026 (24-hour buil
 
 | **Feature** | **Owner** | **Status** |
 | --- | --- | --- |
-| Foundation: Expo scaffold, EAS dev build on all three phones, Supabase project (PostGIS, auth, profiles and roles), all migrations and RLS, RLS check. Then driver screens (start and end trip, now loading or departed); after H10, background location and Realtime positions. **Integrator.** | JM (Reantazo) | Not started |
+| Foundation: Expo scaffold, EAS dev build on all three phones, Supabase project (PostGIS, auth, profiles and roles), all migrations and RLS, RLS check. Then driver screens (start and end trip, now loading or departed); after H10, background location and Realtime positions. **Integrator.** | JM (Reantazo) | Started: scaffold, dev build, migration 1, login and roles done |
 | Commuter screens: terminal picker (nearest by GPS), destination list, fare card, Mapbox map with route line and vehicle markers; Mapbox Studio style; jeepney route lines for Naga. After H10: boarding QR scan with the 100 m check, Pay screen with the coop's QR. Designer liaison and pitch deck. | Matt (Bagasbas) | Started: Mapbox style and the Pacol to Centro route |
 | Coop screens: terminals with pin picker, routes and fares, vehicles and driver assignment. Seed Naga terminal and fare data (photos of real fare matrices). After H10: push notifications, QR Ph entry by scanning the coop's printed code. | Rj (Mendoza) | Not started |
 
@@ -133,11 +133,11 @@ Laravel connects to the database as one Postgres user, so Supabase RLS no longer
 ### Setup Checklist [HUMAN ONLY]
 
 - [x] Repo created by Matt on GitHub (double-check all 3 members have push access)
-- [ ] Node 22 LTS, Git, EAS CLI on all 3 laptops; Android Studio + JDK 17 on one laptop (build backup)
+- [ ] Node 22 LTS, Git, EAS CLI on all 3 laptops; Android Studio + JDK 17 on one laptop (build backup) (JM's laptop is still on Node 20.20.2: the phone works, but pressing `w` for web crashes until Node 22)
 - [x] Expo SDK 56 app created (Expo Router + NativeWind), every native module from tech-stack.md installed, pushed to the repo
-- [x] Supabase project created (Singapore), PostGIS on, CLI linked on the integrator's laptop, first migration pushed (email confirmation off: JM to double-check in the dashboard)
+- [x] Supabase project created (Singapore), PostGIS on, CLI linked on the integrator's laptop, first migration pushed, email confirmation off (checked in the dashboard Oct 27)
 - [ ] First EAS dev build installed on all 3 phones (JM's done; Matt and Rj via `handoff.md`)
-- [ ] Auth works: register, login, logout
+- [x] Auth works: register, login, logout (tested on JM's phone Oct 27)
 - [ ] Everyone has cloned and run it: `npm install`, `npm start`, opens on their phone's dev build
 - [ ] .env values (Supabase URL and anon key, Mapbox public token) shared privately, not in the repo
 - [ ] **Confirm with TACTICS** if pre-built boilerplate is allowed, since the event says "build from scratch"
@@ -311,3 +311,4 @@ Newest information wins. Add a row for every decision.
 | Oct 26, scaffold | **Stay on Expo SDK 56** although expo-doctor flags a known Hermes V1 memory regression (fixed in SDK 57). Upgrade only if the driver phone crashes or slows during the long GPS test. | SDK 57 needs Node 22.13+ on every laptop and an untested NativeWind and rnmapbox combination; demo sessions are short and the app can be restarted before the pitch. |
 | Oct 26, scaffold | Android package `com.motomeetables.larga`; the EAS project is owned by the Expo organization **motomeetables** (`owner` in app.json), not a personal account. App code under `src/`, one plain route folder per role (`src/app/commuter`, `driver`, `coop`). | The package name is permanent once signed. The org lets all three of us see builds. Plain folders avoid three `(group)/index.tsx` files all claiming `/`. |
 | Oct 26, database | **Migration 1 pushed.** Locations stored as plain `lat`/`lng` numbers, not PostGIS columns; PostGIS only inside distance functions. Sign-ups are always commuters; the integrator promotes coop, bus operator and driver accounts in the SQL Editor (safe default while Rj's "bus operators register" question is open). Coop users read their own coop's drivers. `supabase/checks/rls.sql` and `rls_behaviour.sql` run before each merge. | Supabase returns PostGIS columns as hex the app cannot plot. Self-chosen roles would let anyone edit fare guides. Reviewed with /ponytail-review, /security-review and Supabase's advisor (4 expected warnings, no errors). |
+| Oct 27, login | **Login and roles in the app.** Email and password sign-in and sign-up (full name goes to `profiles` through the sign-up trigger). Expo Router's `Stack.Protected` in the root layout keeps logged-out users on sign-in and logged-in users off it; `src/app/index.tsx` reads your own `profiles.role` and redirects to `/commuter`, `/driver` or `/coop`. Screens do not check the role themselves. `@hookform/resolvers` pinned to 5.9.2. | RLS already blocks every write a wrong role could try, so per-screen role checks add nothing for the demo. Resolvers 6.0.0 fails to install (peer conflict). Tested on JM's phone; driver and coop redirects not tested yet. |
