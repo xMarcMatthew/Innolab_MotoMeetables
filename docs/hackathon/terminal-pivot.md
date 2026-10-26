@@ -43,5 +43,5 @@ Focus on **terminals**: jeepney, bus and tricycle terminals where trips start fr
 3. **Reusable QR misuse:** a photo of the driver's QR can be scanned from anywhere. Possible fix: accept the scan only if the commuter's phone is near the vehicle's live location.
 4. **Who sets the status, the driver or a dispatcher?**
 5. **Fare matrix:** is it per destination only, or does it also cover drop-off points along the way?
-6. **Buses:** full flow, or information only (bus lines already sell tickets online)?
+6. **Buses:** full flow, or information only (bus lines already sell tickets online)? (Answered later: full flow; see the Decisions Log, "Oct 26, core flow".)
 7. **APK or web/PWA:** live GPS keeps background location in play, which was the reason for the APK. Reconfirm.
