@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "31 of 31 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "35 of 35 PASS" and "no failures".
 
 begin;
 
@@ -124,6 +124,14 @@ select pg_temp.expect('coop cannot put a vehicle on another coop''s route', 'err
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.vehicles (coop_id, route_id, plate, vehicle_type) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a2', 'TEST-009', 'tricycle')$q$));
 select pg_temp.expect('coop cannot move a vehicle to another coop', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$update public.vehicles set coop_id = '00000000-0000-0000-0000-0000000000c2' where id = '00000000-0000-0000-0000-0000000000b2'$q$));
+select pg_temp.expect('coop cannot assign another coop''s driver', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000e' where id = '00000000-0000-0000-0000-0000000000b2'$q$));
+select pg_temp.expect('coop cannot assign a commuter as driver', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a' where id = '00000000-0000-0000-0000-0000000000b2'$q$));
+select pg_temp.expect('coop still edits a vehicle that keeps its own driver', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$update public.vehicles set plate = 'TEST-001B' where id = '00000000-0000-0000-0000-0000000000b1'$q$));
+select pg_temp.expect('coop adds a modern jeepney vehicle', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.vehicles (coop_id, route_id, plate, vehicle_type) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-010', 'modern_jeepney')$q$));
 
 -- Driver D (assigned to TEST-001)
 select pg_temp.expect('driver sets their status', 'rows=1',
