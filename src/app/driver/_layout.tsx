@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 
 import { colors } from "@/lib/colors";
 
-// Driver tabs (Decisions D4, same pattern as the commuter tabs). QR joins when boarding exists.
+// Driver tabs (Decisions D4, same pattern as the commuter tabs).
 export default function DriverTabs() {
   return (
     <Tabs
@@ -19,6 +19,15 @@ export default function DriverTabs() {
           title: "Trip",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="steering" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="qr"
+        options={{
+          title: "QR",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="qrcode" color={color} size={size} />
           ),
         }}
       />

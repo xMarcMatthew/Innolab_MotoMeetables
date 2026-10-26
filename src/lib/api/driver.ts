@@ -44,6 +44,25 @@ export async function setFare(fare: number) {
   if (error) throw new Error(error.message);
 }
 
+// RLS returns only the signed-in driver's own token, so no filter is needed. null when no vehicle is assigned.
+export async function getMyBoardQr(): Promise<{ board_token: string; plate: string } | null> {
+  const { data, error } = await supabase
+    .from("vehicle_tokens")
+    .select("board_token, vehicle:vehicles(plate)")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const vehicle = data.vehicle as unknown as { plate: string };
+  return { board_token: data.board_token, plate: vehicle.plate };
+}
+
+// Boardings on the driver's vehicle since midnight Manila time (count only, never who).
+export async function getPassengersToday(): Promise<number> {
+  const { data, error } = await supabase.rpc("my_passengers_today");
+  if (error) throw new Error(error.message);
+  return data as number;
+}
+
 // null removes the QR. The database checks the format; the app checks the CRC (isValidQrPh) before calling.
 export async function setMyPaymentQr(qr: string | null) {
   const { error } = await supabase.rpc("set_my_payment_qr", { p_qr: qr });

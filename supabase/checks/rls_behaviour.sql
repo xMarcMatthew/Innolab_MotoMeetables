@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "53 of 53 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "66 of 66 PASS" and "no failures".
 
 begin;
 
@@ -73,7 +73,7 @@ insert into public.vehicles (id, coop_id, route_id, plate, vehicle_type, driver_
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-001', 'jeepney', '00000000-0000-0000-0000-00000000000d'),
   ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-002', 'jeepney', null);
 
-insert into public.vehicle_tokens (vehicle_id) values ('00000000-0000-0000-0000-0000000000b1');
+-- Board tokens come from the vehicles trigger (migration 7).
 insert into public.boardings (commuter_id, vehicle_id) values
   ('00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-0000000000b1');
 
@@ -136,6 +136,8 @@ select pg_temp.expect('coop adds a modern jeepney vehicle', 'rows=1',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.vehicles (coop_id, route_id, plate, vehicle_type) values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a1', 'TEST-010', 'modern_jeepney')$q$));
 select pg_temp.expect('coop adds a modern jeepney route', 'rows=1',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000b', $q$insert into public.routes (terminal_id, destination_name, destination_lat, destination_lng, vehicle_type, guide_fare_regular) values ('00000000-0000-0000-0000-0000000000f1', 'Modern Place', 13.66, 123.22, 'modern_jeepney', 17)$q$));
+select pg_temp.expect('a vehicle the coop adds gets a board token', '1',
+  (select count(*)::text from public.vehicle_tokens t join public.vehicles v on v.id = t.vehicle_id where v.plate = 'TEST-010'));
 
 -- Driver D (assigned to TEST-001)
 select pg_temp.expect('driver sets their status', 'rows=1',
@@ -189,6 +191,41 @@ select pg_temp.expect('driver removes the payment QR', 'rows=1',
 select pg_temp.expect('a removed payment QR is empty and not marked', ' false',
   (select coalesce(payment_qr, '') || ' ' || payment_qr_by_driver from public.vehicles where id = '00000000-0000-0000-0000-0000000000b1'));
 
+-- Boarding (migration 7). Driver D's TEST-001 is live at 13.63, 123.19 from the location checks above.
+select pg_temp.expect('logged out: cannot board', 'err:42501',
+  pg_temp.try_exec(null, format('select public.board_vehicle(%L, 13.6301, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('commuter cannot board with an unknown code', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.board_vehicle('not-a-token', 13.6301, 123.19)$q$));
+select pg_temp.expect('commuter cannot board from a location outside the map', 'err:22023',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 123.19, 13.63)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('commuter 1 km away cannot board', 'err:LG002',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.64, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+update public.vehicle_positions set updated_at = now() - interval '31 seconds'
+where vehicle_id = '00000000-0000-0000-0000-0000000000b1';
+select pg_temp.expect('commuter cannot board a vehicle whose position is stale', 'err:LG001',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+update public.vehicle_positions set updated_at = now()
+where vehicle_id = '00000000-0000-0000-0000-0000000000b1';
+select pg_temp.expect('driver cannot board', 'err:42501',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', format('select public.board_vehicle(%L, 13.6301, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('commuter 11 m away boards', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('commuter sees their trip', '1',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.boardings'));
+select pg_temp.expect('commuter cannot board the same vehicle again within 10 min', 'err:LG003',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', format('select public.board_vehicle(%L, 13.6301, 123.19)',
+    (select board_token from public.vehicle_tokens where vehicle_id = '00000000-0000-0000-0000-0000000000b1'))));
+select pg_temp.expect('driver sees passengers today', '2',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select public.my_passengers_today()'));
+select pg_temp.expect('commuter gets no passenger count', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select public.my_passengers_today()'));
+
 -- A coop wrongly assigns commuter A as a driver: the driver functions still refuse them.
 update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a'
 where id = '00000000-0000-0000-0000-0000000000b2';
@@ -198,6 +235,8 @@ select pg_temp.expect('commuter assigned as driver still cannot save a location'
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.update_my_location(13.62, 123.18)$q$));
 select pg_temp.expect('commuter assigned as driver still cannot set a payment QR', 'err:42501',
   pg_temp.try_exec('00000000-0000-0000-0000-00000000000a', $q$select public.set_my_payment_qr('00020126360014ph.ppmi.p2p6304ABCD')$q$));
+select pg_temp.expect('commuter assigned as driver still cannot read the board token', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.vehicle_tokens'));
 
 -- Report by raising an error: the SQL Editor and CLI show only the last statement's output, and an
 -- error is the one ending that always rolls the test data back, wherever this file is run.

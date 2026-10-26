@@ -4,6 +4,22 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 27 (late night, later), JM → Matt and Rj: boarding is live (migration 7), driver QR tab
+
+- **Migration 7 is pushed:** every vehicle has a board token (existing ones filled in, new ones from a trigger). Pre-push test and live checks: RLS behaviour 66/66, search 12/12, 28/28 OK. Security review clean.
+- **Driver QR tab** (Trip · QR · Account): the board QR full screen, the plate, and "Passengers today", refreshed every 5 s. Tested on JM's phone, including a pretend boarding from the SQL Editor.
+- **Matt, for Scan to board** (the slot in `route.tsx`):
+  ```ts
+  const { data: vehicleId, error } = await supabase.rpc("board_vehicle", {
+    p_token: scannedText, p_lat: me.lat, p_lng: me.lng,
+  });
+  ```
+  `error.message` is ready to show as is: "This is not a Larga boarding code", "This vehicle is not sharing its location right now" (`LG001`), "You are too far from this vehicle to board it" (`LG002`, over 100 m), "You already boarded this vehicle" (`LG003`, within 10 min). Only commuter accounts can board. Who wires it is still open (JM can, as with the live markers).
+- **Matt, your Trips tab** can go live now: the query in the comment in `src/app/commuter/trips.tsx` works against the live database (a commuter reads only their own boardings).
+- **Rj:** nothing to do in the coop screens; a vehicle you add gets its token automatically.
+
+---
+
 ## Oct 27 (late night), JM → everyone: where things stand, what is next
 
 **State:** the snapshot is the "Current hour / phase" row in `prep-plan.md`. Live database: migrations 1 to 6 plus the Naga seed; checks 53/53, 12/12, 25/25 OK. Every pushed migration was first run in a rolled-back pre-push test (migration + its check file in one `begin ... rollback`).
