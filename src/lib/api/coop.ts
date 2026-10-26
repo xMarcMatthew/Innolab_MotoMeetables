@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { VEHICLE_TYPES } from "@/lib/validation";
 
 export type Terminal = {
   id: string;
@@ -41,7 +42,7 @@ export async function createTerminal(input: TerminalInput) {
   if (error) throw new Error(error.message);
 }
 
-export type VehicleType = "jeepney" | "tricycle" | "bus";
+export type VehicleType = (typeof VEHICLE_TYPES)[number];
 
 export type Route = {
   id: string;

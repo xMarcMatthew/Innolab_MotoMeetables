@@ -27,7 +27,7 @@ export const terminalSchema = z.object({
   lng: z.number().min(-180).max(180),
 });
 
-export const VEHICLE_TYPES = ["jeepney", "tricycle", "bus"] as const;
+export const VEHICLE_TYPES = ["jeepney", "modern_jeepney", "tricycle", "bus"] as const;
 
 // Route form fields as typed (text). Fare limits and the destination name length match the routes checks in migration 1.
 export const routeFieldsSchema = z

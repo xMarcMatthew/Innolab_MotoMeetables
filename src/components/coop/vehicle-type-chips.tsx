@@ -4,7 +4,8 @@ import type { VehicleType } from "@/lib/api/coop";
 import { VEHICLE_TYPES } from "@/lib/validation";
 
 export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
-  jeepney: "Jeepney",
+  jeepney: "Traditional jeepney",
+  modern_jeepney: "Modern jeepney",
   tricycle: "Tricycle",
   bus: "Bus",
 };
@@ -14,12 +15,19 @@ type ChipsProps<T extends string> = {
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
+  wrap?: boolean; // two per row, for long labels
 };
 
 // One row of text-label chips; the selected one is filled. Never color alone.
-export function Chips<T extends string>({ options, value, onChange, disabled }: ChipsProps<T>) {
+export function Chips<T extends string>({
+  options,
+  value,
+  onChange,
+  disabled,
+  wrap,
+}: ChipsProps<T>) {
   return (
-    <View className="flex-row gap-2">
+    <View className={`flex-row gap-2 ${wrap ? "flex-wrap" : ""}`}>
       {options.map((o) => (
         <Pressable
           key={o.value}
@@ -27,7 +35,7 @@ export function Chips<T extends string>({ options, value, onChange, disabled }: 
           accessibilityState={{ selected: o.value === value, disabled }}
           disabled={disabled}
           onPress={() => onChange(o.value)}
-          className={`flex-1 items-center rounded-lg py-3 ${
+          className={`flex-1 items-center rounded-lg py-3 ${wrap ? "min-w-[45%]" : ""} ${
             o.value === value ? "bg-primary" : "border border-muted bg-white"
           }`}
         >
@@ -52,7 +60,7 @@ export function VehicleTypeChips({
   return (
     <View className="gap-2">
       <Text className="font-medium text-foreground">Vehicle type</Text>
-      <Chips options={TYPE_OPTIONS} value={value} onChange={onChange} />
+      <Chips options={TYPE_OPTIONS} value={value} onChange={onChange} wrap />
     </View>
   );
 }

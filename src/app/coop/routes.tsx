@@ -2,9 +2,8 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-rou
 import { useCallback } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
+import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { useTerminalRoutes } from "@/hooks/use-terminal-routes";
-
-const TYPE_LABELS = { jeepney: "Jeepney", tricycle: "Tricycle", bus: "Bus" };
 
 const peso = (n: number) => `₱${n.toFixed(2)}`;
 
@@ -73,7 +72,7 @@ export default function TerminalRoutes() {
         >
           <Text className="text-lg font-semibold text-foreground">{r.destination_name}</Text>
           <Text className="text-muted">
-            {TYPE_LABELS[r.vehicle_type]} · {peso(r.guide_fare_regular)}
+            {VEHICLE_TYPE_LABELS[r.vehicle_type]} · {peso(r.guide_fare_regular)}
             {r.guide_fare_discounted !== null && ` / ${peso(r.guide_fare_discounted)} discounted`}
           </Text>
         </Pressable>
