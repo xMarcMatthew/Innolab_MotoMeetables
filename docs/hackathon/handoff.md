@@ -4,6 +4,30 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 28 (midday, later), JM → Matt and Rj: demo setup (phone on the laptop screen)
+
+We mirror the phone to the laptop (then the projector) with **scrcpy**: free, open source, nothing installed on the phone, almost no lag over USB, and it plays the phone's sound on the laptop (Android 11+), so the audience hears the "Drop-off ahead" alert.
+
+**One-time setup (about 10 min):**
+1. Phone: Settings → About phone → tap **Build number** 7 times → back to Settings → **Developer options** → turn on **USB debugging**.
+2. Laptop: download the Windows zip from the official page only, **github.com/Genymobile/scrcpy** → Releases → `scrcpy-win64-…zip`, and unzip it (for example `C:\Tools\scrcpy`).
+3. Plug the phone in by USB; on the phone, tick "Always allow from this computer" and tap **Allow** on "Allow USB debugging?".
+
+**Before each demo or rehearsal (in PowerShell, from the scrcpy folder):**
+1. Phone on mobile data or a phone hotspot (Supabase and Mapbox need internet; not the venue Wi-Fi).
+2. Metro through the cable, so it does not depend on Wi-Fi: `.\adb.exe reverse tcp:8081 tcp:8081`
+3. In the repo: `npx expo start --no-dev --minify` (fast production code, no yellow warning boxes). Open the dev build on the phone and pick `http://localhost:8081`.
+4. Mirror: `.\scrcpy.exe --show-touches --stay-awake --window-title Larga` (`--show-touches` draws a dot where you tap). **Alt+F** makes the window full screen.
+5. Moving jeeps on the map: `npm run simulate` in a second terminal (needs `DEMO_DRIVER_PASSWORD` in `.env`, ask JM). Ctrl+C stops it.
+
+**Notes:**
+- One scrcpy window mirrors one phone. For the boarding scene, mirror the commuter phone; the driver phone is held up to the camera or shown after.
+- Accounts: markphilips as the commuter; a driver account on SMP-1001 for boarding (promote SQL in the scratchpad routine). Do not sign a phone in as `demo.driverN` while the simulator runs (both would move the same jeep).
+- Test on the real projector before the pitch (HDMI, then Alt+F), and keep the backup demo video ready.
+- The pitch says the four moving jeeps are simulated; the driver phone is the one real driver.
+
+---
+
 ## Oct 28 (midday), JM → Matt and Rj: Scan to board passed on two phones, drop-off alerts (migration 9)
 
 - **Scan to board passed end to end** (markphilips scanning Matt's driver account on SMP-1001): "Boarded SMP-1001 · Getting off near …", passengers today went up, and the Drop-off dot showed on Matt's Map tab.
