@@ -57,6 +57,13 @@ left join auth.users u on u.id = v.driver_id
 where v.id::text like '0de30000-%'
 order by v.plate;
 
+-- ---------------------------------------------------------------- RESET before each demo run (paste on its own)
+-- Removes the demo commuter's rides from today, so Scan to board works again ("You already boarded this
+-- vehicle" lasts 10 min) and the driver's passenger count, drop-off pins and alerts start fresh.
+-- delete from public.boardings
+-- where commuter_id = (select id from auth.users where email = 'markphilips@example.com')
+--   and boarded_at > now() - interval '1 day';
+
 -- ---------------------------------------------------------------- UNDO (removes only the demo rows)
 -- delete from public.vehicles where id::text like '0de30000-%';  -- tokens and positions go with them; trips keep an empty vehicle
 -- update public.profiles set role = 'commuter', coop_id = null

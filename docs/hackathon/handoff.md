@@ -19,6 +19,7 @@ We mirror the phone to the laptop (then the projector) with **scrcpy**: free, op
 3. In the repo: `npx expo start --no-dev --minify` (fast production code, no yellow warning boxes). Open the dev build on the phone and pick `http://localhost:8081`.
 4. Mirror: `.\scrcpy.exe --show-touches --stay-awake --window-title Larga` (`--show-touches` draws a dot where you tap). **Alt+F** makes the window full screen.
 5. Moving jeeps on the map: `npm run simulate` in a second terminal (needs `DEMO_DRIVER_PASSWORD` in `.env`, ask JM). Ctrl+C stops it.
+6. **Reset the boarding scene:** paste the RESET block at the bottom of `supabase/seed/demo.sql` in the SQL Editor (without the `--`). It removes markphilips' rides from today, so "You already boarded this vehicle" (a 10 min rule) cannot block a repeat run. On the driver phone, **Start trip** and wait about 5 s before scanning; scan near a window or outside, since indoor GPS can read over 100 m off ("You are too far").
 
 **Notes:**
 - One scrcpy window mirrors one phone. For the boarding scene, mirror the commuter phone; the driver phone is held up to the camera or shown after.
