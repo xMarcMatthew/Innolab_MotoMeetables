@@ -60,9 +60,11 @@ order by v.plate;
 -- ---------------------------------------------------------------- RESET before each demo run (paste on its own)
 -- Removes the demo commuter's rides from today, so Scan to board works again ("You already boarded this
 -- vehicle" lasts 10 min) and the driver's passenger count, drop-off pins and alerts start fresh.
+-- Keeps the seeded history rides from demo-trips.sql (their ids start with 0de30000-).
 -- delete from public.boardings
 -- where commuter_id = (select id from auth.users where email = 'markphilips@example.com')
---   and boarded_at > now() - interval '1 day';
+--   and boarded_at > now() - interval '1 day'
+--   and id::text not like '0de30000-%';
 
 -- ---------------------------------------------------------------- UNDO (removes only the demo rows)
 -- delete from public.vehicles where id::text like '0de30000-%';  -- tokens and positions go with them; trips keep an empty vehicle
