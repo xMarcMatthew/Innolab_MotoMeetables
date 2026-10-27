@@ -1,3 +1,5 @@
+import type { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { ComponentProps } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { VehicleType } from "@/lib/api/coop";
@@ -8,6 +10,17 @@ export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   modern_jeepney: "Modern jeepney",
   tricycle: "Tricycle",
   bus: "Bus",
+};
+
+// No jeepney glyph in the icon set; the passenger van is the closest shape.
+export const VEHICLE_TYPE_ICONS: Record<
+  VehicleType,
+  ComponentProps<typeof MaterialCommunityIcons>["name"]
+> = {
+  jeepney: "van-passenger",
+  modern_jeepney: "van-passenger",
+  tricycle: "rickshaw",
+  bus: "bus",
 };
 
 type ChipsProps<T extends string> = {

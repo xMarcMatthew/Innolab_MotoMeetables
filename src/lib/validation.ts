@@ -14,10 +14,13 @@ export const PASSWORD_RULES: { label: string; test: (password: string) => boolea
   { label: "Symbol", test: (p) => /[^A-Za-z0-9]/.test(p) },
 ];
 
+// 120 matches the profiles.full_name check in migration 1. Also the rename form on the Account tabs.
+const fullName = z.string().trim().min(1, "Enter your name").max(120, "120 characters at most");
+export const fullNameSchema = z.object({ fullName });
+
 export const signUpSchema = z
   .object({
-    // 120 matches the profiles.full_name check in migration 1.
-    fullName: z.string().trim().min(1, "Enter your name").max(120, "120 characters at most"),
+    fullName,
     email: signInSchema.shape.email,
     password: PASSWORD_RULES.reduce<z.ZodString>(
       (schema, rule) => schema.refine(rule.test, "Meet every rule below"),
@@ -95,4 +98,5 @@ export const vehicleStatusSchema = z.enum(VEHICLE_STATUSES);
 
 export type SignIn = z.infer<typeof signInSchema>;
 export type SignUp = z.infer<typeof signUpSchema>;
+export type FullName = z.infer<typeof fullNameSchema>;
 export type Fare = z.infer<typeof fareSchema>;

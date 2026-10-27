@@ -1,29 +1,18 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import type { ComponentProps } from "react";
 import { useEffect } from "react";
 import { Text, View } from "react-native";
 
 import { FareLines, StatusLine } from "@/components/commuter/ride-lines";
-import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
+import { VEHICLE_TYPE_ICONS, VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useRideOptions } from "@/hooks/use-ride-options";
 import type { LatLng } from "@/lib/api/commuter";
-import type { VehicleType } from "@/lib/api/coop";
 import { colors } from "@/lib/colors";
 import { recordPick } from "@/lib/saved-trips";
-
-type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
-// No jeepney glyph in the set; the passenger van is the closest shape.
-const ICONS: Record<VehicleType, IconName> = {
-  jeepney: "van-passenger",
-  modern_jeepney: "van-passenger",
-  tricycle: "rickshaw",
-  bus: "bus",
-};
 
 const distance = (m: number) =>
   m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
@@ -75,7 +64,12 @@ export function RideOptions({ pin, place }: { pin: LatLng; place?: string }) {
           }
         >
           <View className="flex-row items-center gap-2">
-            <MaterialCommunityIcons name={ICONS[o.vehicleType]} size={24} color={colors.primary} />
+            <MaterialCommunityIcons
+              name={VEHICLE_TYPE_ICONS[o.vehicleType]}
+              size={24}
+              color={colors.primary}
+              importantForAccessibility="no"
+            />
             <Text className="text-lg font-semibold text-foreground">
               {VEHICLE_TYPE_LABELS[o.vehicleType]}
             </Text>

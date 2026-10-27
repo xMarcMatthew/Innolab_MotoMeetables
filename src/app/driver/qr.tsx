@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Text, useWindowDimensions, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -83,13 +84,15 @@ export default function DriverQr() {
           backgroundColor="white"
         />
       </View>
-      <View className="items-center gap-1">
-        <Text className="text-2xl font-semibold text-foreground">{board.plate}</Text>
-        <Text className="text-muted">Passengers scan this when they get on.</Text>
+      <View className="self-stretch">
+        <Card>
+          <Text className="text-2xl font-bold text-foreground">{board.plate}</Text>
+          <Text className="text-muted">Passengers scan this when they get on.</Text>
+          <Text className="text-lg text-foreground">
+            Passengers today: <Text className="font-semibold">{passengers ?? "–"}</Text>
+          </Text>
+        </Card>
       </View>
-      <Text className="text-lg text-foreground">
-        Passengers today: <Text className="font-semibold">{passengers ?? "–"}</Text>
-      </Text>
     </View>
   );
 }

@@ -122,6 +122,15 @@ export function removeTrip(trip: SavedTrip): Promise<void> {
   return update((trips) => trips.filter((t) => keyOf(t) !== key));
 }
 
+// For the Account tab: how many places this phone remembers, and a way to forget them all.
+export async function countTrips(): Promise<number> {
+  return (await load()).length;
+}
+
+export function clearTrips(): Promise<void> {
+  return update(() => []);
+}
+
 // Pinned first, then frequent (picked twice or more, most used first), then recent. Each trip appears once.
 export function rank(trips: SavedTrip[], limit: number): SavedTrip[] {
   const latest = (a: SavedTrip, b: SavedTrip) => b.lastUsed - a.lastUsed;
