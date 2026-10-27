@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Linking, ScrollView, Text } from "react-native";
+import { Alert, Linking, ScrollView, View } from "react-native";
 
 import { VEHICLE_TYPE_ICONS, VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { ProfileCard } from "@/components/profile-card";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { SectionLabel } from "@/components/ui/section-label";
 import { SettingsRow } from "@/components/ui/settings-row";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +40,8 @@ async function onSignOut() {
 
 const permissionValue = (p: Permission | null, allowed: string, missing: string) =>
   p === null ? "Checking..." : p.granted ? allowed : missing;
+const permissionTone = (p: Permission | null) =>
+  p === null ? undefined : p.granted ? "success" : "destructive";
 
 // Profile with rename, the vehicle the coop gave this driver, the two permissions a trip needs, Sign out.
 export default function DriverAccount() {
@@ -105,67 +108,77 @@ export default function DriverAccount() {
         <LoadingState />
       )}
 
-      <Card>
-        <Text className="text-lg font-semibold text-foreground">Vehicle</Text>
-        <SettingsRow
-          icon={vehicle ? VEHICLE_TYPE_ICONS[vehicle.vehicle_type] : "bus-alert"}
-          label={
-            vehicle
-              ? `${vehicle.plate} · ${VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}`
-              : "No vehicle assigned"
-          }
-          value={
-            vehicle
-              ? vehicle.route
-                ? `${vehicle.route.terminal.name} → ${vehicle.route.destination_name}. Managed by your coop.`
-                : "No route set by your coop."
-              : "Ask your coop to assign your plate to this account."
-          }
-        />
-      </Card>
+      <View className="gap-2">
+        <SectionLabel>Vehicle</SectionLabel>
+        <Card>
+          <SettingsRow
+            icon={vehicle ? VEHICLE_TYPE_ICONS[vehicle.vehicle_type] : "bus-alert"}
+            label={
+              vehicle
+                ? `${vehicle.plate} · ${VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}`
+                : "No vehicle assigned"
+            }
+            value={
+              vehicle
+                ? vehicle.route
+                  ? `${vehicle.route.terminal.name} → ${vehicle.route.destination_name}. Managed by your coop.`
+                  : "No route set by your coop."
+                : "Ask your coop to assign your plate to this account."
+            }
+          />
+        </Card>
+      </View>
 
-      <Card>
-        <Text className="text-lg font-semibold text-foreground">Settings</Text>
-        <SettingsRow
-          icon="crosshairs-gps"
-          label="Location"
-          value={permissionValue(
-            location,
-            "Allowed all the time. Riders see your jeep while you are on a trip.",
-            'Set to "Allow all the time" so sharing keeps going with the screen off.',
-          )}
-          onPress={fix(location, askLocation, setLocation)}
-        />
-        <SettingsRow
-          icon="bell-outline"
-          label="Notifications"
-          value={permissionValue(
-            notifications,
-            "Allowed. You get a sound before each drop-off.",
-            "Not allowed. Drop-off alerts stay silent.",
-          )}
-          onPress={fix(
-            notifications,
-            () => Notifications.requestPermissionsAsync(),
-            setNotifications,
-          )}
-        />
-      </Card>
+      <View className="gap-2">
+        <SectionLabel>Settings</SectionLabel>
+        <Card>
+          <SettingsRow
+            icon="crosshairs-gps"
+            label="Location"
+            value={permissionValue(
+              location,
+              "Allowed all the time. Riders see your jeep while you are on a trip.",
+              'Set to "Allow all the time" so sharing keeps going with the screen off.',
+            )}
+            tone={permissionTone(location)}
+            onPress={fix(location, askLocation, setLocation)}
+            divider
+          />
+          <SettingsRow
+            icon="bell-outline"
+            label="Notifications"
+            value={permissionValue(
+              notifications,
+              "Allowed. You get a sound before each drop-off.",
+              "Not allowed. Drop-off alerts stay silent.",
+            )}
+            tone={permissionTone(notifications)}
+            onPress={fix(
+              notifications,
+              () => Notifications.requestPermissionsAsync(),
+              setNotifications,
+            )}
+          />
+        </Card>
+      </View>
 
-      <Card>
-        <Text className="text-lg font-semibold text-foreground">About Larga</Text>
-        <SettingsRow icon="information-outline" label="Version" value={VERSION} />
-        <SettingsRow
-          icon="cash"
-          label="Fare guide"
-          value="LTFRB jeepney rates from Sept 28, 2026, and Naga Ord. 2024-002 for tricycles."
-        />
-        <SettingsRow
-          icon="shield-check-outline"
-          label="Payments"
-          value="Riders pay you in their wallet app or in cash. Larga never holds money."
-        />
-      </Card>
+      <View className="gap-2">
+        <SectionLabel>About Larga</SectionLabel>
+        <Card>
+          <SettingsRow icon="information-outline" label="Version" value={VERSION} divider />
+          <SettingsRow
+            icon="cash"
+            label="Fare guide"
+            value="LTFRB jeepney rates from Sept 28, 2026, and Naga Ord. 2024-002 for tricycles."
+            divider
+          />
+          <SettingsRow
+            icon="shield-check-outline"
+            label="Payments"
+            value="Riders pay you in their wallet app or in cash. Larga never holds money."
+          />
+        </Card>
+      </View>
 
       <Button label="Sign out" variant="outline" onPress={onSignOut} />
     </ScrollView>

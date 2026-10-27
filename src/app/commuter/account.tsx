@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Linking, ScrollView, Text } from "react-native";
+import { Alert, Linking, ScrollView, View } from "react-native";
 
 import { ProfileCard } from "@/components/profile-card";
 import { signOut } from "@/components/sign-out-button";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { SectionLabel } from "@/components/ui/section-label";
 import { SettingsRow } from "@/components/ui/settings-row";
 import { clearTrips, countTrips } from "@/lib/saved-trips";
 import { supabase } from "@/lib/supabase";
@@ -78,47 +79,54 @@ export default function AccountScreen() {
         <LoadingState />
       )}
 
-      <Card>
-        <Text className="text-lg font-semibold text-foreground">Settings</Text>
-        <SettingsRow
-          icon="crosshairs-gps"
-          label="Location"
-          value={
-            location === null
-              ? "Checking..."
-              : location.granted
-                ? "Allowed. The terminal nearest you comes first."
-                : "Not allowed. Terminals are not sorted by distance."
-          }
-          onPress={onLocation}
-        />
-        <SettingsRow
-          icon="star-outline"
-          label="Saved places"
-          value={
-            saved === 0
-              ? "None yet. Places you pick on Home are kept on this phone."
-              : `${saved} kept on this phone. Tap to clear.`
-          }
-          onPress={saved > 0 ? onClearSaved : undefined}
-          accessibilityLabel="Clear saved places"
-        />
-      </Card>
+      <View className="gap-2">
+        <SectionLabel>Settings</SectionLabel>
+        <Card>
+          <SettingsRow
+            icon="crosshairs-gps"
+            label="Location"
+            value={
+              location === null
+                ? "Checking..."
+                : location.granted
+                  ? "Allowed. The terminal nearest you comes first."
+                  : "Not allowed. Terminals are not sorted by distance."
+            }
+            tone={location === null ? undefined : location.granted ? "success" : "destructive"}
+            onPress={onLocation}
+            divider
+          />
+          <SettingsRow
+            icon="star-outline"
+            label="Saved places"
+            value={
+              saved === 0
+                ? "None yet. Places you pick on Home are kept on this phone."
+                : `${saved} kept on this phone. Tap to clear.`
+            }
+            onPress={saved > 0 ? onClearSaved : undefined}
+            accessibilityLabel="Clear saved places"
+          />
+        </Card>
+      </View>
 
-      <Card>
-        <Text className="text-lg font-semibold text-foreground">About Larga</Text>
-        <SettingsRow icon="information-outline" label="Version" value={VERSION} />
-        <SettingsRow
-          icon="cash"
-          label="Fare guide"
-          value="LTFRB jeepney rates from Sept 28, 2026, and Naga Ord. 2024-002 for tricycles."
-        />
-        <SettingsRow
-          icon="shield-check-outline"
-          label="Payments"
-          value="Larga never holds money. Pay the driver in your wallet app or in cash."
-        />
-      </Card>
+      <View className="gap-2">
+        <SectionLabel>About Larga</SectionLabel>
+        <Card>
+          <SettingsRow icon="information-outline" label="Version" value={VERSION} divider />
+          <SettingsRow
+            icon="cash"
+            label="Fare guide"
+            value="LTFRB jeepney rates from Sept 28, 2026, and Naga Ord. 2024-002 for tricycles."
+            divider
+          />
+          <SettingsRow
+            icon="shield-check-outline"
+            label="Payments"
+            value="Larga never holds money. Pay the driver in your wallet app or in cash."
+          />
+        </Card>
+      </View>
 
       <Button label="Sign out" variant="outline" onPress={signOut} />
     </ScrollView>

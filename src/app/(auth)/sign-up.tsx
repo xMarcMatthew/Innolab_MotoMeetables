@@ -29,11 +29,9 @@ function PasswordRules({ password }: { password: string }) {
             <MaterialCommunityIcons
               name={met ? "check-circle" : "circle-outline"}
               size={16}
-              color={met ? colors.primary : colors.muted}
+              color={met ? colors.success : colors.muted}
             />
-            <Text className={`text-sm ${met ? "text-foreground" : "text-muted"}`}>
-              {rule.label}
-            </Text>
+            <Text className={`text-sm ${met ? "text-success" : "text-muted"}`}>{rule.label}</Text>
           </View>
         );
       })}

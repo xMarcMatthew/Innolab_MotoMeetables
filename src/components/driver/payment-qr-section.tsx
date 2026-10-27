@@ -67,7 +67,7 @@ export function PaymentQrSection({
       ) : (
         <Button label="Scan my payment QR" disabled={busy} onPress={() => setMode("scan")} />
       )}
-      {saved && <Text className="font-semibold text-foreground">Saved ✓</Text>}
+      {saved && <Text className="font-semibold text-success">Saved ✓</Text>}
     </View>
   );
 }

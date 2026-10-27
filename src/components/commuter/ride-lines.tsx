@@ -43,6 +43,9 @@ export function FareLines({ option, place }: { option: RideOption; place: string
       {driverFare !== null && guide !== null && driverFare > guide && (
         <Text className="font-semibold text-destructive">Above the official fare</Text>
       )}
+      {driverFare !== null && guide !== null && driverFare <= guide && (
+        <Text className="text-sm font-semibold text-success">Matches the official fare</Text>
+      )}
     </View>
   );
 }

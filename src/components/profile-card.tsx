@@ -111,11 +111,11 @@ export function ProfileCard({ fullName, email, seenBy, lines = [], onSaved }: Pr
         </View>
       </View>
       {lines.map((line) => (
-        <Text key={line} className="text-foreground">
+        <Text key={line} className="font-medium text-foreground">
           {line}
         </Text>
       ))}
-      <Text className="text-muted">
+      <Text className="text-sm text-muted">
         {seenBy} see you as {shortName(fullName)}
       </Text>
       <Button

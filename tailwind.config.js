@@ -15,6 +15,8 @@ module.exports = {
         muted: "#475569",
         border: "#E4ECFC",
         destructive: "#DC2626",
+        // green-700: 5.0:1 on white, so it works for small text. Only confirms a state the text already says.
+        success: "#15803D",
       },
     },
   },

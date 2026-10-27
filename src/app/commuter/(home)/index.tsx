@@ -148,9 +148,15 @@ export default function CommuterHome() {
 
   return (
     <View className="flex-1 bg-background">
+      {/* This screen has no header, so the map's top-left corner is under the status bar and the search
+          box: the scale bar moves to the bottom left, above Mapbox's logo and attribution, which sit above
+          the resting sheet where its terms want them visible. */}
       <MapView
         style={{ flex: 1 }}
         styleURL={process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL}
+        scaleBarPosition={{ bottom: PEEK + 40, left: 8 }}
+        logoPosition={{ bottom: PEEK + 8, left: 8 }}
+        attributionPosition={{ bottom: PEEK + 8, left: 100 }}
         onPress={(feature) => {
           if (feature.geometry.type !== "Point") return;
           const [lng, lat] = feature.geometry.coordinates;

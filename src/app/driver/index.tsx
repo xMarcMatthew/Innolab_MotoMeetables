@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Linking, ScrollView, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 
 import { VEHICLE_TYPE_LABELS } from "@/components/coop/vehicle-type-chips";
 import { FirstTripChecklist } from "@/components/driver/first-trip-checklist";
@@ -13,16 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useDriverToday } from "@/hooks/use-driver-today";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
 import { useSavedFlash } from "@/hooks/use-saved-flash";
-import {
-  getPassengersToday,
-  setFare,
-  setMyPaymentQr,
-  setStatus,
-  type VehicleStatus,
-} from "@/lib/api/driver";
+import { setFare, setMyPaymentQr, setStatus, type VehicleStatus } from "@/lib/api/driver";
 import { colors } from "@/lib/colors";
+import { distanceText, metresBetween } from "@/lib/geo";
 import { endTrip, isOnTrip, startTrip, type StartTripResult } from "@/lib/trip";
 import { type Fare, fareSchema } from "@/lib/validation";
 
@@ -40,22 +36,29 @@ const STATUS_LABELS: Record<VehicleStatus, string> = {
   departed: "Departed",
 };
 
-// Same refresh as the QR tab. Drivers cannot read boardings, so no Realtime.
-const COUNT_REFRESH_MS = 5000;
-
 const peso = (n: number) => `₱${n.toFixed(2)}`;
+
+// One number with its label, for the Today card.
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <View className="flex-1 items-center">
+      <Text className="text-2xl font-bold text-foreground">{value}</Text>
+      <Text className="text-center text-sm text-muted">{label}</Text>
+    </View>
+  );
+}
 
 // One obvious next step per stage: Start loading (share location and say so), Depart, End trip.
 // The coop's dispatcher buttons remain the way to correct a status from outside.
 export default function DriverHome() {
   const { vehicle, loading, error, reload } = useMyVehicle();
+  const { passengers, dropPoints, position } = useDriverToday(vehicle?.id);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   // null until we know whether a trip is already running (it survives an app restart).
   const [onTrip, setOnTrip] = useState<boolean | null>(null);
   const [tripAction, setTripAction] = useState<"starting" | "ending" | null>(null);
   const [tripDenied, setTripDenied] = useState<TripDenied | null>(null);
-  const [passengers, setPassengers] = useState<number | null>(null);
   const [fareSaved, flashFareSaved] = useSavedFlash();
   const { control, handleSubmit } = useForm<Fare>({
     resolver: zodResolver(fareSchema),
@@ -86,18 +89,6 @@ export default function DriverHome() {
   useEffect(() => {
     isOnTrip().then(setOnTrip, () => setOnTrip(false));
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      const refreshCount = () =>
-        getPassengersToday()
-          .then(setPassengers)
-          .catch(() => {}); // keep the last count
-      refreshCount();
-      const timer = setInterval(refreshCount, COUNT_REFRESH_MS);
-      return () => clearInterval(timer);
-    }, []),
-  );
 
   // Share location, then say the jeep is loading. A denied permission leaves the status alone.
   const onStartLoading = async () => {
@@ -148,6 +139,15 @@ export default function DriverHome() {
     vehicle.driver_fare > route.guide_fare_regular;
   const sharing = onTrip === true;
 
+  // Nearest drop point by straight line; the sound alert (migration 9) fires at 200 m on the same points.
+  const nextDropMetres =
+    position && dropPoints.length > 0
+      ? Math.min(...dropPoints.map((p) => metresBetween(position, p)))
+      : null;
+  // Passengers × the fare in force: an estimate, since discounted riders pay less.
+  const fareInForce = vehicle.driver_fare ?? route?.guide_fare_regular ?? null;
+  const collected = passengers !== null && fareInForce !== null ? passengers * fareInForce : null;
+
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -158,11 +158,10 @@ export default function DriverHome() {
 
       <Card>
         <View className="flex-row items-start justify-between gap-3">
-          <View className="flex-1 gap-1">
-            <Text className="text-2xl font-bold text-foreground">
-              {vehicle.plate} · {VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}
-            </Text>
-            <Text className="text-muted">
+          <View className="flex-1">
+            <Text className="text-3xl font-bold text-foreground">{vehicle.plate}</Text>
+            <Text className="text-muted">{VEHICLE_TYPE_LABELS[vehicle.vehicle_type]}</Text>
+            <Text className="mt-2 font-medium text-foreground">
               {route
                 ? `${route.terminal.name} → ${route.destination_name}`
                 : "No route set by your coop"}
@@ -179,28 +178,69 @@ export default function DriverHome() {
             <MaterialCommunityIcons
               name={sharing ? "map-marker-radius" : "map-marker-off"}
               size={20}
-              color={sharing ? colors.primary : colors.muted}
+              color={sharing ? colors.success : colors.muted}
               importantForAccessibility="no"
             />
-            <Text className={sharing ? "text-foreground" : "text-muted"}>
+            <Text className={sharing ? "font-medium text-success" : "text-muted"}>
               {sharing ? "Sharing your location with riders" : "Not sharing your location"}
             </Text>
           </View>
         )}
-        <Text className="text-foreground">
-          Passengers today: <Text className="font-semibold">{passengers ?? "–"}</Text>
-        </Text>
+
+        {sharing &&
+          (dropPoints.length === 0 ? (
+            <View className="flex-row items-center gap-2">
+              <MaterialCommunityIcons
+                name="map-marker-check-outline"
+                size={20}
+                color={colors.muted}
+                importantForAccessibility="no"
+              />
+              <Text className="text-muted">No drop-offs ahead</Text>
+            </View>
+          ) : (
+            // The on-screen twin of the drop-off sound: tap to see the points on the Map tab.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Next drop-off, open the map"
+              onPress={() => router.navigate("/driver/map")}
+              className="min-h-12 flex-row items-center gap-2 active:opacity-80"
+            >
+              <MaterialCommunityIcons
+                name="map-marker-distance"
+                size={20}
+                color={colors.accent}
+                importantForAccessibility="no"
+              />
+              <Text className="flex-1 font-medium text-foreground">
+                {nextDropMetres === null
+                  ? `${dropPoints.length} drop-off${dropPoints.length > 1 ? "s" : ""} ahead`
+                  : `Next drop-off in about ${distanceText(nextDropMetres)}`}
+              </Text>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={colors.muted}
+                importantForAccessibility="no"
+              />
+            </Pressable>
+          ))}
 
         {onTrip !== null &&
           (!sharing ? (
-            <Button
-              label="Start loading"
-              variant="accent"
-              disabled={busy}
-              loading={tripAction === "starting"}
-              loadingLabel="Starting..."
-              onPress={onStartLoading}
-            />
+            <>
+              <Button
+                label="Start loading"
+                variant="accent"
+                disabled={busy}
+                loading={tripAction === "starting"}
+                loadingLabel="Starting..."
+                onPress={onStartLoading}
+              />
+              <Text className="text-sm text-muted">
+                Shares your location with riders and marks your jeep as now loading.
+              </Text>
+            </>
           ) : status === "loading" ? (
             <>
               <Button
@@ -261,6 +301,22 @@ export default function DriverHome() {
       </Card>
 
       <Card>
+        <Text className="text-lg font-semibold text-foreground">Today</Text>
+        <View className="flex-row gap-2">
+          <Stat value={passengers === null ? "–" : String(passengers)} label="Passengers" />
+          <Stat
+            value={collected === null ? "–" : `₱${Math.round(collected)}`}
+            label="Fares, about"
+          />
+          <Stat value={String(dropPoints.length)} label="Drop-offs ahead" />
+        </View>
+        <Text className="text-sm text-muted">
+          Fares are passengers times your fare; discounted riders pay less. Counts reset at
+          midnight.
+        </Text>
+      </Card>
+
+      <Card>
         <Text className="text-lg font-semibold text-foreground">Fare</Text>
         <FormField
           control={control}
@@ -279,14 +335,17 @@ export default function DriverHome() {
         {aboveGuide && (
           <Text className="font-semibold text-destructive">Above the official fare</Text>
         )}
+        {route && vehicle.driver_fare !== null && !aboveGuide && (
+          <Text className="font-semibold text-success">Matches the official fare</Text>
+        )}
         <Button label="Save fare" disabled={busy} onPress={onSaveFare} />
-        {fareSaved && <Text className="font-semibold text-foreground">Saved ✓</Text>}
+        {fareSaved && <Text className="font-semibold text-success">Saved ✓</Text>}
       </Card>
 
       <Card>
         <PaymentQrSection
           qr={vehicle.payment_qr}
-          fare={vehicle.driver_fare ?? route?.guide_fare_regular ?? null}
+          fare={fareInForce}
           busy={busy}
           onSave={(qr) => run(() => setMyPaymentQr(qr))}
         />

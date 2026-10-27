@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { SectionLabel } from "@/components/ui/section-label";
 import { useMyTrips } from "@/hooks/use-my-trips";
 import type { Trip } from "@/lib/api/trips";
 import { colors } from "@/lib/colors";
@@ -39,28 +40,33 @@ function byDay(trips: Trip[]) {
   return sections;
 }
 
+// Plate first and largest (it is what the commuter saw on the jeep), the type under it, then the route;
+// the time sits top right so a day's rides scan down the edge.
 function TripCard({ trip }: { trip: Trip }) {
   const v = trip.vehicle;
   return (
     <Card>
-      <View className="flex-row items-center gap-2">
+      <View className="flex-row items-start gap-3">
         {/* Decorative next to the text label, so hidden from screen readers. */}
         <MaterialCommunityIcons
           name={v ? VEHICLE_TYPE_ICONS[v.vehicleType] : "bus-alert"}
-          size={24}
+          size={28}
           color={colors.primary}
           importantForAccessibility="no"
         />
-        <Text className="text-lg font-semibold text-foreground">
-          {v ? `${VEHICLE_TYPE_LABELS[v.vehicleType]} ${v.plate}` : "Vehicle removed"}
-        </Text>
+        <View className="flex-1">
+          <Text className="text-xl font-bold text-foreground">
+            {v ? v.plate : "Vehicle removed"}
+          </Text>
+          {v && <Text className="text-muted">{VEHICLE_TYPE_LABELS[v.vehicleType]}</Text>}
+        </View>
+        <Text className="text-muted">{timeOf(trip.boardedAt)}</Text>
       </View>
       {v?.destinationName && (
-        <Text className="text-foreground">
-          {v.terminalName ? `${v.terminalName} to ${v.destinationName}` : `To ${v.destinationName}`}
+        <Text className="font-medium text-foreground">
+          {v.terminalName ? `${v.terminalName} → ${v.destinationName}` : `To ${v.destinationName}`}
         </Text>
       )}
-      <Text className="text-muted">Boarded {timeOf(trip.boardedAt)}</Text>
     </Card>
   );
 }
@@ -110,7 +116,9 @@ export default function TripsScreen() {
       stickySectionHeadersEnabled={false}
       refreshControl={refreshControl}
       renderSectionHeader={({ section }) => (
-        <Text className="pb-2 pt-3 font-semibold text-muted">{section.title}</Text>
+        <View className="pb-2 pt-4">
+          <SectionLabel>{section.title}</SectionLabel>
+        </View>
       )}
       renderItem={({ item }) => (
         <View className="mb-3">

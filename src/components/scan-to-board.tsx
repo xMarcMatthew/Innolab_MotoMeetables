@@ -92,7 +92,7 @@ export function ScanToBoard({ destination, place }: { destination: LatLng; place
   if (state.mode === "boarded") {
     return (
       <View className="gap-2">
-        <Text className="text-lg font-semibold text-foreground">
+        <Text className="text-lg font-semibold text-success">
           Boarded {state.plate ?? "the vehicle"}
         </Text>
         <Text className="text-muted">Getting off near {place}</Text>

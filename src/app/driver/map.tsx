@@ -6,23 +6,19 @@ import Mapbox, {
   ShapeSource,
   SymbolLayer,
 } from "@rnmapbox/maps";
-import { useFocusEffect } from "expo-router";
 import type { Feature, FeatureCollection, Position } from "geojson";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Text, View } from "react-native";
 
 import { LiveVehicles } from "@/components/live-vehicles";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useDriverToday } from "@/hooks/use-driver-today";
 import { useMyVehicle } from "@/hooks/use-my-vehicle";
-import { getMyDropPointsToday } from "@/lib/api/driver";
 import { colors } from "@/lib/colors";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
-
-// Same refresh as the QR tab's passenger count. Drivers cannot read boardings, so no Realtime.
-const DROPS_REFRESH_MS = 5000;
 
 // A constant: Camera re-frames whenever it gets a new padding object. Extra bottom room for the caption.
 const PADDING = { paddingTop: 48, paddingBottom: 120, paddingLeft: 48, paddingRight: 48 };
@@ -36,19 +32,8 @@ const point = (kind: string, coordinates: Position): Feature => ({
 // The driver's route, the live jeeps on it (their own included) and where today's passengers get off.
 export default function DriverMap() {
   const { vehicle, loading, error, reload } = useMyVehicle();
-  const [drops, setDrops] = useState<{ lat: number; lng: number }[]>([]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const refreshDrops = () =>
-        getMyDropPointsToday()
-          .then(setDrops)
-          .catch(() => {}); // keep the last points
-      refreshDrops();
-      const timer = setInterval(refreshDrops, DROPS_REFRESH_MS);
-      return () => clearInterval(timer);
-    }, []),
-  );
+  // The same poll as the Trip tab's Today card; a failed refresh keeps the last points.
+  const { dropPoints: drops } = useDriverToday(vehicle?.id);
 
   const route = vehicle?.route;
   const map = useMemo(() => {
@@ -110,7 +95,13 @@ export default function DriverMap() {
 
   return (
     <View className="flex-1 bg-background">
-      <MapView style={{ flex: 1 }} styleURL={process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL}>
+      {/* Mapbox's logo and attribution sit above the caption box, where its terms want them visible. */}
+      <MapView
+        style={{ flex: 1 }}
+        styleURL={process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL}
+        logoPosition={{ bottom: 88, left: 8 }}
+        attributionPosition={{ bottom: 88, left: 100 }}
+      >
         <Camera bounds={map.bounds} padding={PADDING} animationDuration={0} />
         <ShapeSource id="route" shape={map.shape}>
           {/* Map layers take raw colors from src/lib/colors.ts */}
