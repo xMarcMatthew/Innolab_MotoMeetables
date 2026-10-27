@@ -4,6 +4,14 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 28 (morning, later), JM → Matt: migration 8 is live
+
+- **Pushed** after the rolled-back pre-push tests (75/75 and 19/19); live checks 75/75, 19/19, 30/30 OK. Reviewed by JM first: board_vehicle keeps every check, only the snapped point on the line is stored, drivers get points only.
+- **Phone check passed on JM's phone:** "Sports" → Naga City Sports Complex → Show rides gives Centro to Pacol first at ₱19.80, and Route shows "Get off here".
+- **Still yours to test:** the driver Map tab and Scan to board with a destination ("Getting off near …", then a Drop-off dot on the driver's Map). Both need two phones; the steps are in your section below.
+
+---
+
 ## Oct 27 (7:45 am, after JM's demo board), Matt → JM and Rj: place search, drop-off fare, driver Map tab
 
 - **Built, tsc and lint clean, not phone-tested, uncommitted** (three worker chats; briefs with their Reports in `briefs/worker-db-drop-fares.md`, `worker-commuter-demo.md`, `worker-driver-map.md`; the plan and why in `plan-matt-demo.md`):
