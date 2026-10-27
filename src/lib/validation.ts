@@ -6,10 +6,29 @@ export const signInSchema = z.object({
   password: z.string().min(6, "At least 6 characters"),
 });
 
-export const signUpSchema = signInSchema.extend({
-  // 120 matches the profiles.full_name check in migration 1.
-  fullName: z.string().trim().min(1, "Enter your name").max(120, "120 characters at most"),
-});
+// Shown as a live checklist under the sign-up password field; the schema is built from the same list.
+export const PASSWORD_RULES: { label: string; test: (password: string) => boolean }[] = [
+  { label: "8+ characters", test: (p) => p.length >= 8 },
+  { label: "Uppercase", test: (p) => /[A-Z]/.test(p) },
+  { label: "Number", test: (p) => /\d/.test(p) },
+  { label: "Symbol", test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
+
+export const signUpSchema = z
+  .object({
+    // 120 matches the profiles.full_name check in migration 1.
+    fullName: z.string().trim().min(1, "Enter your name").max(120, "120 characters at most"),
+    email: signInSchema.shape.email,
+    password: PASSWORD_RULES.reduce<z.ZodString>(
+      (schema, rule) => schema.refine(rule.test, "Meet every rule below"),
+      z.string(),
+    ),
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // Kept as text for the input; the 10,000 cap and 2 decimals match set_my_fare in migration 1.
 export const fareSchema = z.object({

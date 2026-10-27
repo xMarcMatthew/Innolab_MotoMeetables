@@ -1,16 +1,10 @@
-import { type Href, router } from "expo-router";
+import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/button";
-import { setWantsDriver } from "@/lib/onboarding";
 
-// The flag makes index.tsx send a still-commuter account to Waiting instead of commuter Home.
-async function go(href: Href) {
-  await setWantsDriver(true);
-  router.push(href);
-}
-
+// `as: "driver"` marks the driver door: Sign in and Create account show it and set the Waiting flag at submit.
 export default function DriverExplainerScreen() {
   return (
     // The stack header covers the top; only the bottom inset is ours.
@@ -23,8 +17,15 @@ export default function DriverExplainerScreen() {
         </Text>
       </View>
       <View className="gap-3">
-        <Button label="Create account" onPress={() => go("/sign-up")} />
-        <Button label="Sign in" variant="outline" onPress={() => go("/sign-in")} />
+        <Button
+          label="Create account"
+          onPress={() => router.push({ pathname: "/sign-up", params: { as: "driver" } })}
+        />
+        <Button
+          label="Sign in"
+          variant="outline"
+          onPress={() => router.push({ pathname: "/sign-in", params: { as: "driver" } })}
+        />
       </View>
     </SafeAreaView>
   );

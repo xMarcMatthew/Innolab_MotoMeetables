@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 
+import { Badge } from "@/components/ui/badge";
 import type { RideOption } from "@/lib/api/commuter";
 
 export const peso = (n: number) => `₱${n.toFixed(2)}`;
@@ -7,11 +8,7 @@ export const peso = (n: number) => `₱${n.toFixed(2)}`;
 // Always a text label; the orange badge only adds to it (Palette A: accent for "now loading").
 export function StatusLine({ count }: { count: number }) {
   if (count === 0) return <Text className="text-muted">None loading right now</Text>;
-  return (
-    <View className="self-start rounded-full bg-accent px-3 py-1">
-      <Text className="font-semibold text-white">{count} now loading</Text>
-    </View>
-  );
+  return <Badge label={`${count} now loading`} />;
 }
 
 // The headline is the fare to the drop point (migration 8). The driver's fare is set for the whole route,

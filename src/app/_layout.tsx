@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { Link, SplashScreen, Stack } from "expo-router";
 import { cssInterop } from "nativewind";
 import { useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { supabase } from "@/lib/supabase";
 // Defines the driver's background GPS task at startup, as Android requires.
@@ -29,27 +30,30 @@ export default function RootLayout() {
   }, [session]);
 
   // The splash covers the screen until the session is known. Signing out flips the guards, so the router moves to sign-in by itself.
+  // The gesture root is what the Home bottom sheet drags inside of.
   return (
-    <Stack>
-      <Stack.Protected guard={!!session}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="commuter" options={{ headerShown: false }} />
-        <Stack.Screen name="waiting" options={{ title: "Waiting for your coop" }} />
-        <Stack.Screen name="driver" options={{ headerShown: false }} />
-        <Stack.Screen name="coop/index" options={{ title: "Terminals" }} />
-        <Stack.Screen name="coop/terminal" />
-        <Stack.Screen name="coop/routes" />
-        <Stack.Screen name="coop/route" />
-        <Stack.Screen name="coop/vehicles" />
-        <Stack.Screen name="coop/vehicle" />
-      </Stack.Protected>
-      <Stack.Protected guard={!session}>
-        {/* Welcome is first so logged-out users land on it, not on Sign in. */}
-        <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/for-drivers" options={{ title: "Driving for a coop" }} />
-        <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
-        <Stack.Screen name="(auth)/sign-up" options={{ title: "Create account" }} />
-      </Stack.Protected>
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="commuter" options={{ headerShown: false }} />
+          <Stack.Screen name="waiting" options={{ title: "Waiting for your coop" }} />
+          <Stack.Screen name="driver" options={{ headerShown: false }} />
+          <Stack.Screen name="coop/index" options={{ title: "Terminals" }} />
+          <Stack.Screen name="coop/terminal" />
+          <Stack.Screen name="coop/routes" />
+          <Stack.Screen name="coop/route" />
+          <Stack.Screen name="coop/vehicles" />
+          <Stack.Screen name="coop/vehicle" />
+        </Stack.Protected>
+        <Stack.Protected guard={!session}>
+          {/* Welcome is first so logged-out users land on it, not on Sign in. */}
+          <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)/for-drivers" options={{ title: "Driving for a coop" }} />
+          <Stack.Screen name="(auth)/sign-in" options={{ title: "Sign in" }} />
+          <Stack.Screen name="(auth)/sign-up" options={{ title: "Create account" }} />
+        </Stack.Protected>
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
