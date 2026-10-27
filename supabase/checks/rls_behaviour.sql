@@ -1,7 +1,7 @@
 -- RLS behaviour check: acts as real users and expects each attempt to succeed or fail.
 -- Runs inside a transaction that is ALWAYS rolled back, so it leaves no data behind.
 -- Paste into the SQL Editor (or: npx supabase db query --linked -f supabase/checks/rls_behaviour.sql).
--- It ends with an error on purpose; the message should read "75 of 75 PASS" and "no failures".
+-- It ends with an error on purpose; the message should read "83 of 83 PASS" and "no failures".
 
 begin;
 
@@ -255,6 +255,24 @@ select pg_temp.expect('commuter gets no drop points', '0',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.my_drop_points_today()'));
 select pg_temp.expect('driver with no vehicle gets no drop points', '0',
   pg_temp.try_val('00000000-0000-0000-0000-00000000000e', 'select count(*) from public.my_drop_points_today()'));
+
+-- Drop-off alerts (migration 9). A's drop point is near 13.635, 123.195; TEST-001 is at 13.63, 123.19 (about 770 m).
+select pg_temp.expect('a driver far from the drop point gets no alert', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select public.update_my_location(13.63, 123.19)'));
+select pg_temp.expect('a driver 100 m from the drop point gets one alert', '1',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select public.update_my_location(13.6341, 123.195)'));
+select pg_temp.expect('the same drop point alerts only once', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select public.update_my_location(13.6341, 123.195)'));
+select pg_temp.expect('an alerted drop point still shows on the map', '1',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select count(*) from public.my_drop_points_today()'));
+select pg_temp.expect('driver goes off duty (End trip)', 'rows=1',
+  pg_temp.try_exec('00000000-0000-0000-0000-00000000000d', $q$select public.set_vehicle_status('off_duty')$q$));
+select pg_temp.expect('off duty clears the trip''s pins', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select count(*) from public.my_drop_points_today()'));
+select pg_temp.expect('a cleared drop point never alerts', '0',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000d', 'select public.update_my_location(13.635, 123.195)'));
+select pg_temp.expect('clearing pins keeps the commuter''s trip', '1',
+  pg_temp.try_val('00000000-0000-0000-0000-00000000000a', 'select count(*) from public.boardings'));
 
 -- A coop wrongly assigns commuter A as a driver: the driver functions still refuse them.
 update public.vehicles set driver_id = '00000000-0000-0000-0000-00000000000a'

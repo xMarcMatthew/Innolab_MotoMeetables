@@ -4,6 +4,16 @@ Notes between the three of us while we build in parallel. **Newest section on to
 
 ---
 
+## Oct 28 (midday), JM → Matt and Rj: Scan to board passed on two phones, drop-off alerts (migration 9)
+
+- **Scan to board passed end to end** (markphilips scanning Matt's driver account on SMP-1001): "Boarded SMP-1001 · Getting off near …", passengers today went up, and the Drop-off dot showed on Matt's Map tab.
+- **Drop-off alerts are live** (migration 9 plus `src/lib/trip.ts`): about 200 m before a drop point the driver's phone plays a sound and shows "Drop-off ahead: 1 passenger getting off in about 200 m". It is a local notification from the GPS task, no push server. Each drop point alerts once. **End trip now clears the Map tab's pins** (before, they stayed until midnight). Tested on Matt's phone. Checks: 83/83, 19/19, 30 OK.
+- **After you pull:** if a trip is running, tap End trip and Start trip once. Start trip creates the alert channel, and a trip started on older code has none, so it alerts silently or not at all. Notification permission comes from the first-trip checklist.
+- **Matt:** your Map tab needs no change; cleared pins simply stop coming back from `my_drop_points_today`.
+- **Testing without a commuter phone:** a pretend drop-off 110 m north of the driver (SQL in JM's scratchpad routine: insert a `boardings` row with `drop_lat = lat + 0.001` from `vehicle_positions`). A drop point alerts only once, so delete and insert again to repeat.
+
+---
+
 ## Oct 28 (morning, later), JM → Matt: migration 8 is live
 
 - **Pushed** after the rolled-back pre-push tests (75/75 and 19/19); live checks 75/75, 19/19, 30/30 OK. Reviewed by JM first: board_vehicle keeps every check, only the snapped point on the line is stored, drivers get points only.
